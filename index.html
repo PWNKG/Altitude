@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Altitude</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: a slim altimeter column beside one prompt card; the climb is the score */
+:root{
+  --bg:#eaf0f5; --surface:#ffffff; --ink:#122130; --muted:#5d6f80; --line:#d3dde6;
+  --accent:#c93a62; --accent-ink:#ffffff; --sky1:#bcd3e6; --sky2:#f4d6dc;
+  --t0:#7d8b98; --t1:#23946a; --t2:#2a69d6; --t3:#7646d1; --t4:#d79a00; --miss:#a8b3bd;
+  --display:"Unbounded","Arial Black",system-ui,sans-serif;
+  --body:"Figtree",system-ui,-apple-system,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0b131d; --surface:#132130; --ink:#e7eef5; --muted:#8fa2b4; --line:#22364a;
+  --accent:#ff6f92; --accent-ink:#1a0710; --sky1:#1c3550; --sky2:#3a2140;
+  --t0:#93a3b2; --t1:#3ccf92; --t2:#5b95ff; --t3:#a685ff; --t4:#ffc53d; --miss:#3b4d5f; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0b131d; --surface:#132130; --ink:#e7eef5; --muted:#8fa2b4; --line:#22364a;
+  --accent:#ff6f92; --accent-ink:#1a0710; --sky1:#1c3550; --sky2:#3a2140;
+  --t0:#93a3b2; --t1:#3ccf92; --t2:#5b95ff; --t3:#a685ff; --t4:#ffc53d; --miss:#3b4d5f; color-scheme:dark}
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:var(--body);font-size:16px;line-height:1.45;padding-inline:16px;padding-block:16px 32px}
+.wrap{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+h1{font-family:var(--display);font-weight:800;font-size:1.7rem;letter-spacing:-.01em;margin:0;line-height:1}
+h1 span{color:var(--accent)}
+.modes{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px}
+.modes button{border:0;background:transparent;color:var(--muted);font:600 .85rem var(--body);padding:7px 14px;border-radius:999px;cursor:pointer}
+.modes button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.game{display:grid;grid-template-columns:64px 1fr;gap:14px;align-items:stretch}
+.alt{position:relative;border-radius:14px;background:linear-gradient(to top,var(--sky2),var(--sky1));overflow:hidden;min-height:380px;border:1px solid var(--line)}
+.alt svg{position:absolute;inset:auto 0 0 0;width:100%;height:100%}
+.tick{position:absolute;left:0;right:0;border-top:1px dashed color-mix(in srgb,var(--ink) 25%,transparent);font:500 .58rem var(--mono);color:var(--muted);padding:2px 4px;text-align:right}
+.climber{position:absolute;left:50%;width:16px;height:16px;margin-left:-8px;margin-bottom:-8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 30%,transparent);transition:bottom .9s cubic-bezier(.2,.8,.2,1)}
+.altread{position:absolute;top:6px;left:0;right:0;text-align:center;font:700 .72rem var(--mono);color:var(--ink);font-variant-numeric:tabular-nums}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.meta{display:flex;justify-content:space-between;align-items:center;font:500 .78rem var(--mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase;font-variant-numeric:tabular-nums}
+.meta b{color:var(--ink)}
+.prompt{font-family:var(--display);font-weight:700;font-size:clamp(1.3rem,4.6vw,1.9rem);line-height:1.15;margin:0;text-wrap:balance}
+.bar{height:8px;border-radius:99px;background:color-mix(in srgb,var(--ink) 10%,transparent);overflow:hidden}
+.bar i{display:block;height:100%;width:100%;background:var(--accent);border-radius:99px;transform-origin:left}
+.bar.low i{background:var(--t4)}
+form{display:flex;gap:8px}
+input{flex:1;min-width:0;font:500 1.1rem var(--body);padding:13px 14px;border-radius:12px;border:2px solid var(--line);background:var(--bg);color:var(--ink)}
+input:focus{outline:none;border-color:var(--accent)}
+button{font-family:var(--body);cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.go{font:700 1rem var(--body);padding:0 18px;border-radius:12px;border:0;background:var(--accent);color:var(--accent-ink)}
+.guesses{display:flex;flex-wrap:wrap;gap:6px;min-height:28px}
+.guesses span{font-size:.82rem;padding:4px 10px;border-radius:99px;background:color-mix(in srgb,var(--ink) 7%,transparent);color:var(--muted);text-decoration:line-through}
+.guesses span.note{text-decoration:none;font-style:italic}
+.shake{animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.result{display:flex;flex-direction:column;gap:10px}
+.badge{align-self:flex-start;font:800 .8rem var(--display);letter-spacing:.06em;text-transform:uppercase;padding:7px 12px;border-radius:8px;color:#fff}
+.result .big{font-family:var(--display);font-weight:700;font-size:1.4rem;margin:0}
+.result p{margin:0;color:var(--muted)}
+.result p b{color:var(--ink);font-weight:600}
+.primary{align-self:flex-start;font:700 1rem var(--body);padding:12px 20px;border-radius:12px;border:0;background:var(--ink);color:var(--bg)}
+.ghost{font:600 .9rem var(--body);padding:10px 16px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--ink)}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.tiers{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.tiers div{border-radius:10px;padding:8px 6px;text-align:center;background:color-mix(in srgb,var(--c) 14%,transparent);border:1px solid color-mix(in srgb,var(--c) 35%,transparent)}
+.tiers b{display:block;font:800 .66rem var(--display);letter-spacing:.04em;text-transform:uppercase;color:var(--c)}
+.tiers span{font:500 .72rem var(--mono);color:var(--muted)}
+.emoji{font-size:1.6rem;letter-spacing:.12em}
+.about{font-size:.88rem;color:var(--muted);max-width:65ch;margin:0}
+.about b{color:var(--ink);font-weight:600}
+@media (max-width:420px){.game{grid-template-columns:48px 1fr}.tiers{grid-template-columns:repeat(3,1fr)}.card{padding:16px}}
+@media (prefers-reduced-motion:reduce){.climber{transition:none}.shake{animation:none}}
+</style>
+<style>[hidden]{display:none!important}img{max-width:100%}</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>Alti<span>tude</span></h1>
+    <div class="modes" role="group" aria-label="Mode">
+      <button id="mDaily" aria-pressed="true">Daily climb</button>
+      <button id="mEndless" aria-pressed="false">Endless</button>
+    </div>
+  </header>
+
+  <div class="game">
+    <div class="alt" id="alt" aria-label="Altitude">
+      <svg viewBox="0 0 64 400" preserveAspectRatio="none" aria-hidden="true">
+        <polygon points="0,400 0,250 14,210 22,232 34,120 40,140 50,60 58,96 64,80 64,400" fill="color-mix(in srgb, var(--ink) 16%, transparent)"/>
+        <polygon points="50,60 46,82 52,78 56,90 58,96" fill="var(--surface)" opacity=".8"/>
+      </svg>
+      <div id="ticks"></div>
+      <div class="climber" id="climber" style="bottom:0%"></div>
+      <div class="altread" id="altread">0 m</div>
+    </div>
+
+    <div class="card" id="card"></div>
+  </div>
+
+  <div class="tiers" aria-label="Answer tiers">
+    <div style="--c:var(--t0)"><b>Common</b><span>10 pts</span></div>
+    <div style="--c:var(--t1)"><b>Known</b><span>25 pts</span></div>
+    <div style="--c:var(--t2)"><b>Rare</b><span>50 pts</span></div>
+    <div style="--c:var(--t3)"><b>Deep cut</b><span>80 pts</span></div>
+    <div style="--c:var(--t4)"><b>Rare air</b><span>100 pts</span></div>
+  </div>
+
+  <p class="about">Name <b>one valid answer</b> per prompt before the clock runs out. Obvious answers keep you near base camp. Obscure ones send you up the mountain, and every prompt hides a single <b>Rare air</b> answer worth the most. Wrong guesses cost 2 seconds. The daily climb has 7 prompts, the same for everyone, resetting at 00:00 UTC. Rarity tiers are curated by hand, not counted from other players.</p>
+</div>
+
+<script>
+(function(){
+// ---------- answer data: 4 tiers (common → deep cut) + one hidden rare-air answer. Aliases use "/" ----------
+const P=[
+{q:"Name a country in Africa",t:["nigeria,egypt,south africa,kenya,ghana,morocco,ethiopia","algeria,tunisia,libya,sudan,uganda,tanzania,zimbabwe,senegal,cameroon,somalia,rwanda,congo/democratic republic of the congo/drc/dr congo/republic of the congo,ivory coast/cote d'ivoire,angola,mozambique,madagascar,mali,zambia,namibia,botswana","niger,chad,south sudan,eritrea,malawi,burkina faso,guinea,sierra leone,liberia,benin,togo,gabon,mauritania,lesotho,eswatini/swaziland,mauritius,seychelles,cape verde/cabo verde,gambia/the gambia,burundi,central african republic","djibouti,equatorial guinea,guinea-bissau,comoros"],r:"sao tome and principe"},
+{q:"Name a capital city in Europe",t:["paris,london,berlin,rome,madrid","amsterdam,brussels,vienna,lisbon,athens,dublin,prague,warsaw,stockholm,oslo,copenhagen,helsinki,budapest,moscow,bern","bucharest,sofia,belgrade,zagreb,kyiv/kiev,minsk,riga,tallinn,vilnius,bratislava,ljubljana,reykjavik,luxembourg,monaco,sarajevo,skopje,tirana,chisinau,podgorica,valletta","andorra la vella,san marino,pristina,nicosia,vatican city"],r:"vaduz"},
+{q:"Name a fruit",t:["apple,banana,orange,grape,strawberry,mango,pineapple","pear,peach,cherry,watermelon,lemon,lime,kiwi,plum,blueberry,raspberry,coconut,papaya,apricot,pomegranate,melon,grapefruit,avocado,fig","lychee/litchi,guava,passion fruit,dragon fruit/pitaya,blackberry,cranberry,nectarine,tangerine,clementine,mandarin,date,persimmon,quince,cantaloupe,honeydew,gooseberry,jackfruit,durian,starfruit/carambola,kumquat,longan,rambutan,mangosteen,tamarind","loquat,feijoa,cherimoya,soursop,salak/snake fruit,jabuticaba,medlar,pawpaw,ackee,sapodilla,lingonberry,cloudberry,elderberry,mulberry,boysenberry,yuzu,pomelo,breadfruit,custard apple"],r:"lucuma"},
+{q:"Name a dog breed",t:["labrador/labrador retriever,golden retriever,german shepherd,poodle,bulldog,chihuahua,beagle","husky/siberian husky,pug,dachshund,rottweiler,boxer,dalmatian,border collie,collie,doberman,great dane,shih tzu,yorkshire terrier/yorkie,corgi,french bulldog,pomeranian,greyhound,cocker spaniel,maltese,saint bernard/st bernard,jack russell/jack russell terrier,bichon frise,akita,samoyed,shiba inu,pit bull/pitbull","whippet,bloodhound,basset hound,weimaraner,vizsla,newfoundland,bernese mountain dog,mastiff,malamute/alaskan malamute,chow chow,shar pei,afghan hound,papillon,schnauzer,west highland terrier/westie,scottish terrier,airedale,bull terrier,staffordshire bull terrier/staffy,cavalier king charles spaniel,boston terrier,australian shepherd,lhasa apso,pekingese,irish setter,irish wolfhound,borzoi,basenji,keeshond,havanese","komondor,puli,xoloitzcuintli/xolo,lagotto romagnolo,saluki,leonberger,bedlington terrier,otterhound,affenpinscher,schipperke,kooikerhondje,tibetan mastiff,cane corso,dogo argentino,catahoula,coton de tulear"],r:"azawakh"},
+{q:"Name a sport played with a ball",t:["football/soccer,basketball,tennis,baseball,volleyball,golf,cricket,rugby","american football,table tennis/ping pong,handball,hockey/field hockey,water polo,bowling,squash,softball,netball,dodgeball,billiards/pool/snooker,polo,lacrosse","racquetball,beach volleyball,futsal,croquet,petanque/boules,bocce,kickball,gaelic football,hurling,australian rules football/aussie rules,korfball,pickleball,padel","sepak takraw,jai alai/pelota,goalball,tchoukball,shinty,bandy,rounders,pesapallo,fives,cuju"],r:"chinlone"},
+{q:"Name a vegetable",t:["carrot,potato,tomato,broccoli,onion,lettuce,cucumber,corn","cabbage,spinach,pea,green bean/bean,bell pepper/pepper,cauliflower,celery,garlic,mushroom,pumpkin,eggplant/aubergine/brinjal,zucchini/courgette,sweet potato,beetroot/beet,radish,kale,asparagus,leek","brussels sprout,artichoke,okra,turnip,parsnip,squash,butternut squash,yam,cassava/manioc,chard/swiss chard,bok choy/pak choi,shallot,fennel,kohlrabi,rutabaga/swede,chickpea,lentil,edamame,watercress,arugula/rocket,endive,chicory","salsify,celeriac,jicama,daikon,taro,romanesco,bitter gourd/bitter melon/karela,chayote/chouchou,lotus root,samphire,jerusalem artichoke/sunchoke,mizuna,tatsoi,fiddlehead,cardoon"],r:"oca"},
+{q:"Name a musical instrument",t:["piano,guitar,drum/drums,violin,flute,trumpet,saxophone/sax","cello,clarinet,harp,trombone,ukulele,bass guitar/bass,keyboard,organ,harmonica,accordion,xylophone,tuba,banjo,oboe,tambourine,triangle,viola,double bass,french horn/horn,recorder,bagpipes","bassoon,mandolin,sitar,tabla,bongos/bongo,congas/conga,marimba,glockenspiel,cymbals/cymbal,timpani,harpsichord,synthesizer/synth,piccolo,cornet,euphonium,didgeridoo,lute,kazoo,melodica,castanets,cajon,djembe,steelpan/steel drum","theremin,hurdy gurdy,erhu,koto,shamisen,oud,balalaika,bouzouki,kalimba,mbira,dulcimer,zither,celesta,ocarina,sousaphone,flugelhorn,contrabassoon,handpan/hang,vibraphone,ravanne,sarangi,shakuhachi,gamelan"],r:"ondes martenot"},
+{q:"Name a bird",t:["eagle,parrot,pigeon,crow,owl,sparrow,penguin,chicken","duck,swan,flamingo,peacock,hawk,falcon,robin,seagull/gull,ostrich,hummingbird,woodpecker,toucan,turkey,goose,pelican,vulture,crane,heron,stork,raven,magpie,canary,dove,emu,kiwi","kingfisher,albatross,cardinal,blue jay/jay,finch,wren,starling,swallow,swift,lark,nightingale,cuckoo,puffin,cormorant,ibis,egret,kookaburra,cockatoo,macaw,budgie/budgerigar,parakeet,pheasant,quail,partridge,condor,osprey,kestrel,buzzard,cassowary,rhea,blackbird,thrush,myna/mynah,bulbul","shoebill,hoatzin,kakapo,secretary bird,lammergeier/bearded vulture,hornbill,bee-eater,hoopoe,lyrebird,frigatebird,booby,gannet,oystercatcher,avocet,curlew,godwit,plover,lapwing,nuthatch,treecreeper,dodo,pink pigeon,tropicbird/paille en queue,quetzal,potoo"],r:"echo parakeet"},
+{q:"Name a US state",t:["california,texas,florida,new york,hawaii,alaska","washington,nevada,arizona,colorado,georgia,ohio,michigan,illinois,massachusetts,new jersey,pennsylvania,virginia,oregon,utah,louisiana,tennessee,north carolina,south carolina,kentucky,alabama,minnesota,wisconsin,indiana,missouri,maryland,connecticut,kansas,oklahoma,iowa,mississippi,arkansas,new mexico,maine,vermont","idaho,montana,nebraska,south dakota,west virginia,new hampshire","north dakota,wyoming,rhode island"],r:"delaware"},
+{q:"Name a Greek god, goddess or titan",t:["zeus,poseidon,hades,athena,aphrodite,apollo","hera,ares,hermes,artemis,dionysus,hephaestus,demeter,persephone,eros,nike,kronos/cronus,gaia,hestia","helios,selene,eos,nyx,pan,hecate,iris,hebe,morpheus,hypnos,thanatos,nemesis,tyche,uranus/ouranos,rhea,oceanus,hyperion,prometheus,atlas,themis,mnemosyne,asclepius,boreas,zephyrus,triton,chaos,erebus","tethys,phoebe,coeus,crius,iapetus,theia,metis,leto,dione,eileithyia,harmonia,enyo,deimos,phobos,eris,ananke,chronos,aether,hemera,pontus,tartarus,nereus,proteus,amphitrite,thalassa,aeolus,notus,eurus,priapus,hymen"],r:"momus"},
+{q:"Name a programming language",t:["python,javascript/js,java,c,c++/cpp,c#/csharp","php,ruby,swift,go/golang,rust,kotlin,typescript,sql,r,perl,scala,matlab,dart,bash/shell,assembly,visual basic/vba/vb,objective-c","haskell,lua,fortran,cobol,pascal,delphi,lisp,clojure,erlang,elixir,f#,julia,groovy,prolog,scheme,ocaml,basic,powershell,abap,solidity,zig,nim,crystal,elm","smalltalk,ada,apl,forth,racket,d,vala,haxe,tcl,awk,simula,algol,brainfuck,rexx,rpg,modula-2,eiffel,idris,coq,agda,mumps"],r:"malbolge"},
+{q:"Name a spice or herb",t:["black pepper/pepper,cinnamon,garlic,ginger,basil,oregano,turmeric","paprika,cumin,nutmeg,cloves/clove,mint,parsley,rosemary,thyme,chilli/chili,cardamom,vanilla,saffron,coriander/cilantro,curry powder,bay leaf,dill,sage,chives,mustard seed","fenugreek,fennel seed,star anise,anise,allspice,tarragon,marjoram,lemongrass,curry leaf,garam masala,cayenne,sumac,za'atar,caraway,mace,juniper,lavender,asafoetida/hing,nigella,galangal,makrut lime leaf/kaffir lime leaf,sichuan pepper","grains of paradise,ajwain,amchur,long pepper,annatto,epazote,lovage,sorrel,savory,borage,shiso,chervil,angelica,mahleb,black lime/loomi,wasabi,horseradish"],r:"orris root"},
+{q:"Name a sea creature",t:["shark,whale,dolphin,octopus,jellyfish,crab,starfish/sea star,turtle/sea turtle","squid,lobster,shrimp/prawn,seal,stingray,clownfish,eel,seahorse,orca/killer whale,coral,clam,oyster,sea urchin,manta ray,swordfish,tuna,walrus,sea lion,sea otter,pufferfish,barracuda","narwhal,beluga,manatee,dugong,anglerfish,lionfish,moray eel,cuttlefish,nautilus,krill,plankton,barnacle,sea anemone/anemone,sea cucumber,hammerhead,blue whale,humpback whale,marlin,sunfish/mola,nudibranch/sea slug,mussel,scallop,flounder,cod,salmon,grouper,parrotfish,triggerfish","oarfish,gulper eel,vampire squid,blobfish,frilled shark,goblin shark,coelacanth,hagfish,lamprey,sea pen,sea butterfly,siphonophore,salp,giant isopod/isopod,mantis shrimp,dumbo octopus,leafy seadragon,wobbegong,remora,sea spider,crinoid/sea lily"],r:"pyrosome"},
+{q:"Name a cheese",t:["cheddar,mozzarella,parmesan,brie,feta,gouda,swiss","camembert,blue cheese,roquefort,gorgonzola,ricotta,cream cheese,cottage cheese,emmental,gruyere,halloumi,mascarpone,provolone,edam,stilton,manchego,paneer,goat cheese/chevre,monterey jack,colby,pecorino","havarti,jarlsberg,comte,raclette,reblochon,taleggio,fontina,burrata,boursin,wensleydale,red leicester,double gloucester,port salut,munster,limburger,asiago,queso fresco,cotija,oaxaca,saint agur,tilsit","epoisses,vacherin,mimolette,tomme,beaufort,abondance,caciocavallo,scamorza,stracchino,casu marzu,brunost,leerdammer,lancashire,caerphilly,cheshire,shropshire blue,cambozola,saint nectaire,morbier,livarot,pont l'eveque"],r:"stinking bishop"},
+{q:"Name a gemstone",t:["diamond,ruby,emerald,sapphire,pearl,amethyst","topaz,opal,jade,garnet,turquoise,aquamarine,onyx,quartz,amber,peridot,citrine,tourmaline","lapis lazuli,moonstone,tanzanite,zircon,spinel,alexandrite,obsidian,jasper,agate,malachite,tiger's eye,carnelian,beryl,coral,morganite,bloodstone,chalcedony,rose quartz,hematite,labradorite","benitoite,painite,taaffeite,grandidierite,jadeite,nephrite,kunzite,iolite,sunstone,chrysoberyl,chrysoprase,rhodochrosite,sodalite,sugilite,tsavorite,demantoid,larimar,ammolite,moldavite,charoite"],r:"musgravite"},
+{q:"Name a country that is an island (or made of islands)",t:["japan,united kingdom/uk/great britain/britain,new zealand,madagascar,iceland,philippines,indonesia,cuba","ireland,sri lanka,jamaica,mauritius,maldives,taiwan,singapore,cyprus,malta,bahamas,haiti,dominican republic,fiji,seychelles,barbados,trinidad and tobago,papua new guinea,bahrain","cape verde/cabo verde,comoros,samoa,tonga,vanuatu,solomon islands,timor-leste/east timor,grenada,saint lucia,antigua and barbuda,dominica,saint kitts and nevis,saint vincent and the grenadines,micronesia,palau,marshall islands,kiribati,sao tome and principe","tuvalu"],r:"nauru"},
+{q:"Name a bone in the human body",t:["skull/cranium,femur/thigh bone,rib,jaw/jawbone/mandible,kneecap/patella,collarbone/clavicle,pelvis/hip bone","humerus,tibia/shin bone,fibula,radius,ulna,sternum/breastbone,scapula/shoulder blade,vertebra,coccyx/tailbone,sacrum,phalanx/phalanges","metacarpal,metatarsal,carpal,tarsal,maxilla,zygomatic/cheekbone,hyoid,atlas,axis,calcaneus/heel bone,talus,ilium,ischium,pubis,frontal bone,parietal bone,occipital bone,temporal bone,stapes/stirrup,incus/anvil,malleus/hammer,nasal bone","sphenoid,ethmoid,vomer,lacrimal,palatine,scaphoid,lunate,triquetrum,pisiform,trapezium,trapezoid,capitate,hamate,cuboid,navicular,cuneiform,sesamoid,inferior nasal concha"],r:"fabella"},
+{q:"Name a currency",t:["dollar,euro,pound,yen,rupee,peso","yuan/renminbi,franc,rand,real,ruble/rouble,won,dinar,lira,krona,krone,shilling,dirham,riyal,baht,ringgit","rupiah,dong,naira,cedi,zloty,forint,koruna,leu,lev,hryvnia,lari,dram,tenge,som,manat,taka,kyat,kip,riel,rial,kwacha,birr,dalasi,leone,ariary,pula,loti,lilangeni,metical,kwanza,guarani,sol,boliviano,colon,cordoba,lempira,quetzal,balboa,gourde","ouguiya,ngultrum,pa'anga,tala,vatu,kina,rufiyaa,afghani,somoni,nakfa,dobra,escudo,denar,convertible mark,lek"],r:"tugrik/togrog"},
+{q:"Name a kind of tree",t:["oak,pine,maple,palm,apple,birch,willow","cherry,elm,ash,beech,cedar,spruce,fir,redwood,sequoia,eucalyptus,baobab,mango,coconut,olive,cypress,chestnut,walnut,poplar,banyan","sycamore,aspen,hemlock,larch,yew,juniper,hawthorn,holly,magnolia,dogwood,acacia,teak,mahogany,ebony,rowan,alder,linden/lime tree,hornbeam,hazel,plane,ginkgo,jacaranda,flame tree/flamboyant/royal poinciana,neem,tamarind,fig","dragon blood tree,monkey puzzle,bristlecone pine,joshua tree,kapok,sandalwood,rosewood,quiver tree,ironwood,tupelo,catalpa,sassafras,hickory,pecan,buckeye,ombu,takamaka,bois de natte"],r:"wollemi pine"},
+{q:"Name a colour",t:["red,blue,green,yellow,purple,orange,pink,black,white,brown","grey/gray,violet,indigo,turquoise,teal,navy,maroon,beige,cyan,magenta,gold,silver,cream,lavender,lilac,crimson,scarlet,burgundy,olive,coral,peach,khaki","aquamarine,azure,cerulean,cobalt,ultramarine,vermilion,ochre,sienna,umber,taupe,mauve,fuchsia,chartreuse,emerald,jade,amber,ivory,charcoal,ecru,sepia,saffron,mustard,salmon,periwinkle,sapphire,ruby,rust,tan,mint,lime,plum","puce,celadon,gamboge,fallow,glaucous,wenge,falu red,heliotrope,smalt,zaffre,xanadu,coquelicot,wisteria,feldgrau,isabelline,razzmatazz,viridian,carmine,cinnabar,alizarin"],r:"eigengrau"},
+{q:"Name a chemical element",t:["oxygen,hydrogen,carbon,gold,iron,nitrogen,helium,silver","copper,sodium,calcium,aluminium/aluminum,zinc,lead,uranium,neon,potassium,chlorine,mercury,platinum,lithium,magnesium,sulfur/sulphur,silicon,titanium,tin,phosphorus,plutonium,nickel,argon,fluorine,iodine,cobalt,radium","beryllium,boron,chromium,manganese,tungsten,krypton,xenon,radon,arsenic,bromine,cadmium,selenium,barium,strontium,vanadium,caesium/cesium,francium,bismuth,palladium,iridium,osmium,gallium,germanium,antimony,tellurium,thorium,polonium,americium,einsteinium,californium,neptunium,zirconium,molybdenum,rubidium,scandium,yttrium,lanthanum,cerium,neodymium,europium,indium,thallium,rhodium,ruthenium,tantalum,niobium,hafnium,rhenium,astatine,curium,nobelium,mendelevium,fermium,lawrencium","praseodymium,promethium,samarium,gadolinium,terbium,dysprosium,holmium,erbium,thulium,ytterbium,lutetium,technetium,actinium,berkelium,rutherfordium,dubnium,seaborgium,bohrium,hassium,meitnerium,darmstadtium,roentgenium,copernicium,nihonium,flerovium,moscovium,livermorium,tennessine,oganesson"],r:"protactinium"},
+{q:"Name a capital city in Asia",t:["tokyo,beijing,new delhi/delhi,bangkok,seoul","manila,jakarta,kuala lumpur,singapore,hanoi,kabul,tehran,baghdad,riyadh,islamabad,dhaka,kathmandu,colombo,taipei,ankara,doha,abu dhabi","ulaanbaatar/ulan bator,pyongyang,vientiane,phnom penh,naypyidaw,thimphu,male,tashkent,astana,bishkek,dushanbe,ashgabat,baku,tbilisi,yerevan,muscat,sanaa,amman,damascus,beirut,kuwait city,manama,dili","bandar seri begawan"],r:"sri jayawardenepura kotte/kotte"},
+{q:"Name a shape (2D or 3D)",t:["circle,square,triangle,rectangle,star,heart,oval","pentagon,hexagon,octagon,diamond,rhombus,trapezium/trapezoid,parallelogram,cube,sphere,cylinder,cone,pyramid,crescent,ellipse,cross,arrow,semicircle","heptagon,nonagon,decagon,dodecagon,kite,cuboid,prism,tetrahedron,octahedron,dodecahedron,icosahedron,torus,spiral,helix,polygon,quadrilateral,annulus,sector,lune,chevron","hendecagon/undecagon,enneagon,rhombicosidodecahedron,deltoid,trefoil,reuleaux triangle,frustum,ellipsoid,paraboloid,hyperboloid,mobius strip,klein bottle,tesseract,lemniscate,cardioid,astroid,octagram,pentagram,hexagram"],r:"gomboc"},
+{q:"Name a unit of measurement",t:["metre/meter,kilogram/kg,second,litre/liter,mile,inch,foot/feet,gram,kilometre/kilometer/km","centimetre/centimeter/cm,millimetre/millimeter/mm,pound,ounce,yard,tonne/ton,gallon,pint,hour,minute,degree,celsius,fahrenheit,volt,watt,ampere/amp,calorie,byte,acre,hectare","newton,joule,kelvin,pascal,ohm,hertz,mole,candela,coulomb,farad,tesla,weber,henry,lumen,lux,bar,atmosphere,decibel,knot,nautical mile,light year,parsec,astronomical unit,carat,furlong,fathom,stone,quart,cup,teaspoon,tablespoon,horsepower,btu,psi,angstrom,micron,radian","siemens,becquerel,gray,sievert,katal,steradian,league,chain,rod/perch,hand,cubit,span,slug,poundal,erg,dyne,gauss,maxwell,barn,jiffy,shake,dram,gill,peck,bushel,hogshead,firkin"],r:"smoot"}
+];
+const TIER=[{n:"Common",p:10,s:8,e:"⬜",c:"--t0"},{n:"Known",p:25,s:10,e:"🟩",c:"--t1"},{n:"Rare",p:50,s:12,e:"🟦",c:"--t2"},{n:"Deep cut",p:80,s:15,e:"🟪",c:"--t3"},{n:"Rare air",p:100,s:20,e:"🌟",c:"--t4"}];
+const SUMMIT=8849, MAXPTS=700, ROUND=25, PENALTY=2, ROUNDS=7;
+
+// ---------- matching ----------
+const norm=s=>s.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/&/g,"and").trim().replace(/^the\s+/,"").replace(/[^a-z0-9+#]/g,"");
+const title=s=>s.replace(/(^|[\s-])([a-z])/g,(m,a,b)=>a+b.toUpperCase());
+function build(p){if(p.map)return p.map;const m={};
+  const add=(item,tier)=>{const al=item.split("/");const disp=title(al[0]);for(const a of al){const k=norm(a);if(k&&!(k in m))m[k]={tier,disp};}};
+  p.t.forEach((s,i)=>s.split(",").forEach(it=>add(it.trim(),i)));add(p.r,4);p.map=m;return m;}
+function lev(a,b,max){if(Math.abs(a.length-b.length)>max)return max+1;let prev=Array.from({length:b.length+1},(_,i)=>i);
+  for(let i=1;i<=a.length;i++){const cur=[i];let best=i;for(let j=1;j<=b.length;j++){cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));best=Math.min(best,cur[j]);}if(best>max)return max+1;prev=cur;}return prev[b.length];}
+function lookup(p,input){const m=build(p);const k=norm(input);if(!k)return null;if(m[k])return {...m[k],key:k};
+  const vs=[k.replace(/ies$/,"y"),k.replace(/es$/,""),k.replace(/s$/,""),k+"s"];for(const v of vs)if(m[v])return {...m[v],key:v};
+  if(k.length>=5){const max=k.length>=9?2:1;let best=null,bd=max+1;for(const key in m){if(key.length<5)continue;const d=lev(k,key,max);if(d<bd){bd=d;best=key;}}if(best)return {...m[best],key:best};}
+  return null;}
+
+// ---------- helpers ----------
+const $=id=>document.getElementById(id);
+const card=$("card");
+const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const today=()=>new Date().toISOString().slice(0,10);
+function rng(seed){let h=1779033703^seed.length;for(let i=0;i<seed.length;i++){h=Math.imul(h^seed.charCodeAt(i),3432918353);h=h<<13|h>>>19;}
+  return function(){h=Math.imul(h^h>>>16,2246822507);h=Math.imul(h^h>>>13,3266489909);h^=h>>>16;return (h>>>0)/4294967296;};}
+function shuffled(arr,r){const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+const store={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const metres=pts=>Math.round(pts*SUMMIT/MAXPTS);
+const band=m=>m>=8000?"Summit":m>=6000?"Death Zone":m>=4000?"Glacier":m>=2000?"Treeline":"Base Camp";
+const fmt=n=>n.toLocaleString("en-US");
+
+// altimeter
+[2000,4000,6000,8000].forEach(h=>{const d=document.createElement("div");d.className="tick";d.style.bottom=(h/SUMMIT*92)+"%";d.textContent=(h/1000)+"k";$("ticks").appendChild(d);});
+function setAlt(m){$("climber").style.bottom=Math.min(97,m/SUMMIT*92+2)+"%";$("altread").textContent=fmt(m)+" m";}
+
+// ---------- state ----------
+let mode="daily", st=null, tick=null;
+function stopTimer(){if(tick){clearInterval(tick);tick=null;}}
+function startTimer(onEnd){stopTimer();let last=performance.now();
+  tick=setInterval(()=>{const now=performance.now();st.time-=(now-last)/1000;last=now;drawBar();if(st.time<=0){st.time=0;drawBar();stopTimer();onEnd();}},100);}
+function drawBar(){const b=document.querySelector(".bar");if(!b)return;const full=mode==="daily"?ROUND:st.cap;
+  b.firstElementChild.style.transform=`scaleX(${Math.max(0,Math.min(1,st.time/full))})`;b.classList.toggle("low",st.time<6);
+  const t=$("tleft");if(t)t.textContent=Math.ceil(st.time)+"s";}
+
+function playView(){
+  const p=st.prompts[st.i];
+  const head=mode==="daily"?`<span>Prompt <b>${st.i+1}</b>/${ROUNDS}</span>`:`<span>Score <b>${fmt(st.score)}</b></span>`;
+  card.innerHTML=`<div class="meta">${head}<span>${mode==="daily"?"Time":"Oxygen"} <b id="tleft">${Math.ceil(st.time)}s</b></span></div>
+    <h2 class="prompt">${esc(p.q)}</h2>
+    <div class="bar"><i></i></div>
+    <form id="f" autocomplete="off"><input id="ans" placeholder="Type an answer" aria-label="Your answer" enterkeyhint="go"><button class="go" type="submit">Go</button></form>
+    <div class="guesses" id="gs"></div>`;
+  drawBar();
+  const inp=$("ans");inp.focus();
+  $("f").onsubmit=e=>{e.preventDefault();const v=inp.value.trim();if(!v)return;inp.value="";guess(v);};
+}
+function chip(text,note){const s=document.createElement("span");s.textContent=text;if(note)s.className="note";$("gs").prepend(s);}
+function guess(v){const p=st.prompts[st.i];const hit=lookup(p,v);
+  if(!hit){st.time=Math.max(0,st.time-PENALTY);chip(v);const f=$("f");f.classList.remove("shake");void f.offsetWidth;f.classList.add("shake");drawBar();return;}
+  if(mode==="endless"){if(st.used.has(p.q+"|"+hit.key)){chip(hit.disp+" (used)",true);return;}
+    st.used.add(p.q+"|"+hit.key);const t=TIER[hit.tier];st.score+=t.p;st.time=Math.min(st.cap,st.time+t.s);st.log.push(hit.tier);
+    setAlt(metres(st.score));flash(hit,t);nextEndless();return;}
+  stopTimer();finishRound(hit);}
+function flash(hit,t){const d=document.createElement("div");d.className="badge";d.style.background=`var(${t.c})`;d.textContent=`${hit.disp} · ${t.n} +${t.p}`;
+  card.prepend(d);setTimeout(()=>d.remove(),1400);}
+
+// ---------- daily ----------
+function startDaily(){stopTimer();mode="daily";
+  const saved=store.get("rareair.daily");if(saved&&saved.date===today()){st=saved;setAlt(metres(st.score));return summaryView();}
+  const r=rng("rareair-"+today());st={date:today(),prompts:shuffled(P,r).slice(0,ROUNDS),i:0,score:0,log:[],answers:[],time:ROUND};
+  setAlt(0);roundStart();}
+function roundStart(){st.time=ROUND;playView();startTimer(()=>finishRound(null));}
+function finishRound(hit){const p=st.prompts[st.i];build(p);
+  if(hit){st.score+=TIER[hit.tier].p;st.log.push(hit.tier);st.answers.push(hit.disp);}else{st.log.push(-1);st.answers.push(null);}
+  setAlt(metres(st.score));
+  const t=hit?TIER[hit.tier]:null;
+  const deep=p.t[3].split(",").map(s=>title(s.split("/")[0].trim()));const ex=shuffled(deep,Math.random).slice(0,3).join(", ");
+  const rare=title(p.r.split("/")[0]);
+  const last=st.i===ROUNDS-1;
+  card.innerHTML=`<div class="meta"><span>Prompt <b>${st.i+1}</b>/${ROUNDS}</span><span>Total <b>${fmt(st.score)}</b> pts</span></div>
+    <h2 class="prompt">${esc(p.q)}</h2>
+    <div class="result">
+      ${t?`<span class="badge" style="background:var(${t.c})">${t.n} · +${t.p}</span><p class="big">${esc(hit.disp)}</p>`:`<span class="badge" style="background:var(--miss)">Out of time</span>`}
+      <p>Rare air answer: <b>${esc(rare)}</b></p>
+      <p>Deep cuts include: <b>${esc(ex)}</b></p>
+      <button class="primary" id="nx">${last?"See your climb":"Next prompt"}</button>
+    </div>`;
+  const nx=$("nx");nx.focus();nx.onclick=()=>{if(last){store.set("rareair.daily",strip(st));summaryView();}else{st.i++;roundStart();}};}
+function strip(s){return {date:s.date,score:s.score,log:s.log,answers:s.answers,prompts:s.prompts.map(p=>({q:p.q}))};}
+function summaryView(){const m=metres(st.score);const em=st.log.map(t=>t<0?"⬛":TIER[t].e).join("");
+  const share=`Altitude · ${st.date}\n${em}\n${fmt(m)} m · ${band(m)}`;
+  card.innerHTML=`<div class="meta"><span>Daily climb</span><span>${st.date}</span></div>
+    <h2 class="prompt">${fmt(m)} m · ${band(m)}</h2>
+    <div class="emoji" aria-label="Your seven answers by tier">${em}</div>
+    <p style="margin:0;color:var(--muted)">${fmt(st.score)} points. A new climb opens at 00:00 UTC.</p>
+    <div class="row"><button class="primary" id="cp">Copy result</button><button class="ghost" id="toE">Play endless</button></div>
+    <pre id="sh" hidden style="white-space:pre-wrap;font-family:var(--mono);font-size:.85rem;margin:0">${esc(share)}</pre>`;
+  $("cp").onclick=()=>{const b=$("cp");const done=()=>{b.textContent="Copied";};
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(share).then(done,()=>{$("sh").hidden=false;b.textContent="Copy the text below";});}else{$("sh").hidden=false;}};
+  $("toE").onclick=()=>setMode("endless");}
+
+// ---------- endless ----------
+function startEndless(){stopTimer();mode="endless";st={prompts:[],i:0,score:0,log:[],used:new Set(),time:45,cap:45,order:shuffled(P,Math.random),k:0};
+  setAlt(0);st.prompts=[st.order[0]];playView();startTimer(endEndless);}
+function nextEndless(){st.k=(st.k+1)%st.order.length;st.prompts=[st.order[st.k]];const keepT=st.time;playView();st.time=keepT;drawBar();}
+function endEndless(){const best=Math.max(store.get("rareair.best")||0,st.score);store.set("rareair.best",best);const m=metres(st.score);
+  card.innerHTML=`<div class="meta"><span>Endless</span><span>Best <b>${fmt(best)}</b> pts</span></div>
+    <h2 class="prompt">Out of oxygen at ${fmt(m)} m</h2>
+    <div class="emoji">${st.log.map(t=>TIER[t].e).join("")||"⬛"}</div>
+    <p style="margin:0;color:var(--muted)">${fmt(st.score)} points from ${st.log.length} answers. Rarer answers refill more oxygen.</p>
+    <div class="row"><button class="primary" id="again">Climb again</button><button class="ghost" id="toD">Daily climb</button></div>`;
+  $("again").onclick=startEndless;$("toD").onclick=()=>setMode("daily");$("again").focus();}
+
+function setMode(m){$("mDaily").setAttribute("aria-pressed",m==="daily");$("mEndless").setAttribute("aria-pressed",m==="endless");
+  if(m==="daily")startDaily();else endlessIntro();}
+function endlessIntro(){stopTimer();mode="endless";setAlt(0);const best=store.get("rareair.best")||0;
+  card.innerHTML=`<div class="meta"><span>Endless</span><span>Best <b>${fmt(best)}</b> pts</span></div>
+    <h2 class="prompt">Climb until your oxygen runs out</h2>
+    <p style="margin:0;color:var(--muted)">You start with 45 seconds of oxygen. Every valid answer moves you to a new prompt and refills it: 8s for common, up to 20s for rare air. Wrong guesses cost 2s.</p>
+    <button class="primary" id="go">Start climbing</button>`;
+  $("go").onclick=startEndless;}
+
+$("mDaily").onclick=()=>setMode("daily");$("mEndless").onclick=()=>setMode("endless");
+
+// daily intro (so the clock doesn't start before the player is ready)
+(function intro(){const saved=store.get("rareair.daily");if(saved&&saved.date===today()){startDaily();return;}
+  card.innerHTML=`<div class="meta"><span>Daily climb</span><span>${today()}</span></div>
+    <h2 class="prompt">7 prompts. 25 seconds each. Go obscure.</h2>
+    <p style="margin:0;color:var(--muted)">Example: for “Name a fruit”, <b style="color:var(--ink)">Apple</b> is common (10 pts) but <b style="color:var(--ink)">Feijoa</b> is a deep cut (80 pts). Small typos and plurals are accepted.</p>
+    <button class="primary" id="go">Start today's climb</button>`;
+  $("go").onclick=startDaily;})();
+})();
+</script>
+</body>
+</html>
