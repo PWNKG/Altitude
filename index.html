@@ -118,7 +118,7 @@ button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
 .who{display:flex;align-items:center;gap:8px;font:800 1.05rem var(--display);overflow-wrap:anywhere}
 .who i,.lb i{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font:800 .72rem var(--display);font-style:normal;color:#0b1020}
 .primary.wide{align-self:stretch;justify-content:center}
-.mapwrap{max-height:62vh;overflow-y:auto;border-radius:16px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.08);scrollbar-width:thin}
+.mapwrap{max-height:70vh;overflow-y:auto;border-radius:16px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.08);scrollbar-width:thin}
 .map{display:block;width:100%;height:auto}
 .map .pkn{font:700 10.5px var(--body);fill:#f4f7fc}
 .map .pkh{font:500 9.5px var(--mono);fill:#a9b6c9}
@@ -136,6 +136,16 @@ button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
 .lb .lbp{display:none}
 .lb .lbs{font:700 .82rem var(--mono);font-variant-numeric:tabular-nums}
 @media (min-width:521px){.lb li{grid-template-columns:22px 26px minmax(0,1fr) auto auto}.lb .lbp{display:block;font-size:.78rem;color:var(--muted);white-space:nowrap}}
+.rocket{position:fixed;inset:0;width:100%;height:100%;z-index:5;cursor:pointer;transition:opacity .43s;display:block}
+.rocket[hidden]{display:none}.rocket.out{opacity:0}
+.sf .body{stroke:var(--c);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;fill:none}
+.sf .hd{fill:var(--c)}
+.sf .bob{animation:bob 2.6s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-2px)}}
+.sf .nm rect{fill:rgba(8,12,24,.78)}
+.sf .nm text{font:700 9.5px var(--body);fill:#fff}
+.sf.me .nm rect{fill:var(--accent)}.sf.me .nm text{fill:#22060d}
+.sf.me .body,.sf.me .hd{filter:drop-shadow(0 0 4px var(--accent))}
 @media (max-width:820px){.rail{display:none}.pill{display:inline-block}}
 @media (max-width:440px){.card{padding:20px;border-radius:20px}.ladder div{grid-template-columns:84px 1fr auto}.logo span{display:none}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -158,6 +168,7 @@ button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
   </header>
   <main><div class="card" id="card"></div></main>
 </div>
+<canvas id="rk" class="rocket" hidden></canvas>
 <div class="rail" id="rail" aria-hidden="true"><div class="line"></div><div class="me" id="me"><i></i><span id="meT">0 m</span></div></div>
 
 <script>
@@ -249,6 +260,15 @@ P.push(
 {q:"Name a Bollywood playback singer",t:["lata mangeshkar/lata,kishore kumar/kishore,mohammed rafi/rafi,asha bhosle/asha,arijit singh/arijit,sonu nigam/sonu","shreya ghoshal/shreya,udit narayan,kumar sanu,alka yagnik,mukesh,kavita krishnamurthy,sunidhi chauhan,kk,shaan,atif aslam,neha kakkar,armaan malik,jubin nautiyal,badshah,yo yo honey singh/honey singh,mika singh,daler mehndi,rahat fateh ali khan,sukhwinder singh,kailash kher,shankar mahadevan,vishal dadlani,monali thakur,palak muchhal,b praak,darshan raval,sachet tandon,mohit chauhan,benny dayal,javed ali,lucky ali,a r rahman/ar rahman","manna dey,talat mahmood,hemant kumar,geeta dutt,shamshad begum,suman kalyanpur,noor jehan,k l saigal/saigal,mahendra kapoor,usha mangeshkar,amit kumar,shabbir kumar,mohammed aziz,suresh wadkar,hariharan,roop kumar rathod,sadhana sargam,anuradha paudwal,abhijeet,vinod rathod,anu malik,alisha chinai,hema sardesai,jaspinder narula,richa sharma,kunal ganjawala,neeti mohan,jonita gandhi,shalmali kholgade,tulsi kumar,asees kaur,dhvani bhanushali,amit trivedi,papon,nikhita gandhi,shilpa rao,harshdeep kaur,sona mohapatra,usha uthup,bappi lahiri,r d burman/rd burman","zohrabai ambalewali,amirbai karnataki,rajkumari dubey,khursheed,g m durrani,s d batish,c h atma,jagjit kaur,sudha malhotra,mubarak begum,kamal barot,minoo purushottam,hemlata,vani jairam,chandrani mukherjee,dilraj kaur,preeti sagar,sulakshana pandit,shailendra singh,bhupinder singh,nitin mukesh,anwar,manhar udhas,pankaj udhas,talat aziz,jagjit singh,chitra singh,k s chithra/chithra,s p balasubrahmanyam/spb,yesudas,s janaki"],r:"w m khan"},
 {q:"Name a Bollywood music composer",t:["a r rahman/ar rahman,r d burman/rd burman/pancham,shankar-ehsaan-loy/shankar ehsaan loy,pritam,vishal-shekhar/vishal shekhar","laxmikant-pyarelal/laxmikant pyarelal,kalyanji-anandji/kalyanji anandji,s d burman/sd burman,shankar-jaikishan/shankar jaikishan,naushad,madan mohan,o p nayyar,salil chowdhury,jatin-lalit/jatin lalit,nadeem-shravan/nadeem shravan,anu malik,bappi lahiri,himesh reshammiya,amit trivedi,sajid-wajid/sajid wajid,vishal bhardwaj,salim-sulaiman/salim sulaiman,sachin-jigar/sachin jigar,anirudh ravichander/anirudh,tanishk bagchi,ilaiyaraaja,shiv-hari/shiv hari,rajesh roshan","c ramchandra,roshan,ravi,chitragupta,hemant kumar,khayyam,jaidev,usha khanna,sonik-omi,anil biswas,ghulam haider,khemchand prakash,husnlal-bhagatram,sajjad hussain,vasant desai,n dutta,s n tripathi,ravindra jain,raamlaxman,anand-milind,viju shah,ismail darbar,sandesh shandilya,mithoon,ankit tiwari,clinton cerejo,ram sampath,sneha khanwalkar,amaal mallik,rochak kohli,santhosh narayanan,m m keeravani/mm keeravani/keeravani,shantanu moitra","r c boral,pankaj mullick,timir baran,saraswati devi,rafiq ghaznavi,shyam sundar,bulo c rani,ghulam mohammed,sardar malik,dattaram,chic chocolate,kersi lord,manohari singh,ajit merchant,vanraj bhatia,bhupen hazarika,ajay-atul/ajay atul,krsna solo"],r:"firozshah mistry/firoz mistry"},
 {q:"Name an Amitabh Bachchan film",t:["sholay,deewaar,zanjeer,don,kabhi khushi kabhie gham/k3g,mohabbatein,amar akbar anthony","silsila,kabhi kabhie,trishul,muqaddar ka sikandar,namak halaal,coolie,agneepath,black,paa,pink,piku,baghban,sharaabi,kaalia,shahenshah,chupke chupke,anand,abhimaan,mili,laawaris,mr natwarlal,naseeb,satte pe satta,shakti,kaala patthar,bunty aur babli,cheeni kum,sarkar,veer-zaara,khakee,bhoothnath,badla,brahmastra,kalki 2898 ad/kalki,thugs of hindostan","saat hindustani,bombay to goa,namak haraam,majboor,faraar,do anjaane,adalat,hera pheri,kasme vaade,ganga ki saugandh,the great gambler,suhaag,dostana,ram balram,yaarana,barsaat ki ek raat,desh premee,nastik,andha kaanoon,mahaan,inquilaab,mard,giraftaar,aakhree raasta,toofan,jaadugar,main azaad hoon,hum,khuda gawah,insaniyat,lal baadshah,sooryavansham,bade miyan chote miyan,major saab,aks,kaante,armaan,dev,lakshya,ek ajnabee,nishabd,the last lear,aladin,shamitabh,wazir,te3n,sarkar 3,102 not out,chehre,jhund,goodbye,uunchai","reshma aur shera,parwana,sanjog,bandhe haath,gehri chaal,bansi birju,ek nazar,raaste ka patthar,benaam,zameer,alaap,besharam,khoon pasina,manzil,jurmana,do aur do paanch,shaan,pukar,bemisal,khud-daar,akayla,indrajeet,ajooba,ganga jamuna saraswati"],r:"bhuvan shome"}
+);
+P.push(
+{q:"Name a Mauritian dish or street food",t:["dholl puri/dhal puri,farata,rougaille,gateau piment/gato piment,mine frit/fried noodles,briani,boulettes,alouda","vindaye/fish vindaye,daube,bol renverse,napolitaine,gateau patate,samoussa,bajia,mine bouilli,halim,achard/achards,chatini,pain maison,cari poulet,macatia coco/macatia","salade de palmiste/millionaire's salad,cari ourite/octopus curry,salade ourite/octopus salad,rougaille saucisse,rougaille poisson sale,kalia,gato zinzli/gateau zinzli,gato coco,moutaille,gateau arouille,bouillon bred/bouillon brede,gros pois,gato banane,gato manioc,pain frire,gateau cravate/gato cravate,mazavaroo","bouillon brede songe,cari cerf/venison curry,vindaye zourite,bouillon crabe,ourite seche,tourte rodriguaise,gato delwil"],r:"poutou"},
+{q:"Name a beach in Mauritius",t:["flic en flac,grand baie,blue bay,belle mare,le morne,trou aux biches,mont choisy","pereybere,tamarin,trou d'eau douce,ile aux cerfs,palmar,la cuvette,pointe aux canonniers,albion,gris gris,cap malheureux,bel ombre","pomponette,riambel,saint felix,pointe d'esny,la preneuse,wolmar,pointe aux piments,baie du cap,grand gaube,roches noires,poste lafayette,ile aux benitiers,ile plate,ile gabriel,le bouchon,bain boeuf","anse la raie,pointe aux biches,bras d'eau,ile d'ambre,la prairie,pointe jerome,petit sable"],r:"pointe aux roches"},
+{q:"Name a mountain, peak or crater in Mauritius",t:["le pouce,le morne/le morne brabant,pieter both,piton de la petite riviere noire/black river peak,trou aux cerfs","corps de garde,signal mountain/montagne des signaux,lion mountain,trois mamelles,montagne du rempart/rempart mountain,tourelle du tamarin,grand bassin/ganga talao","piton du milieu,montagne bambous,montagne blanche,montagne longue,mont ory/montagne ory,bassin blanc,montagne lagrave","junction peak,montagne cocotte,piton savanne,mont choisy hill"],r:"snail rock"},
+{q:"Name a Mauritian singer or band",t:["kaya,ti frere,cassiya,alain ramanisum,linzy bacbotte","menwar,zulu,ras natty baby,fanfan,serge lebrasse,marclaine antoine,claudio veeraragoo,blakkayo,otentik street brothers/osb,racinetatane","jean-claude gaspard,michel legris,desire francois,bam cuttayen,eric triton,laura beg,sandra mayotte,nancy derougere","gerose barbe"],r:"grup latanier"},
+{q:"Name an animal from Mauritius or Rodrigues (living or extinct)",t:["dodo,pink pigeon,mauritius kestrel,echo parakeet,giant tortoise/aldabra tortoise","paille en queue/white-tailed tropicbird/tropicbird,fruit bat/mauritius fruit bat/flying fox,tenrec/tang,mongoose,rusa deer/java deer/deer,macaque/monkey,round island boa,telfair's skink","mauritius fody,olive white-eye/mauritius olive white-eye,mauritius paradise flycatcher/coq des bois,mauritius cuckooshrike,mauritius bulbul,ornate day gecko,blue-tailed day gecko,round island petrel,red rail,broad-billed parrot","guenther's gecko,durrell's night gecko,bojer's skink,mauritius grey white-eye/pic pic,mauritius swiftlet,mauritius blue pigeon,keel-scaled boa,rodrigues fody,rodrigues warbler,rodrigues flying fox"],r:"rodrigues solitaire"},
+{q:"Name a famous Mauritian",t:["seewoosagur ramgoolam/sir seewoosagur ramgoolam/ssr,anerood jugnauth/sir anerood jugnauth/saj,navin ramgoolam,pravind jugnauth,paul berenger","kaya,ti frere,malcolm de chazal,j m g le clezio/le clezio,ameenah gurib-fakim,cassam uteem,gaetan duval,bruno julie,stephan buckland,kailash purryag,prithvirajsing roopun/roopun","khal torabully,ananda devi,nathacha appanah,abhimanyu unnuth,robert edward hart,dev virahsawmy,shenaz patel,marie-therese humbert,sookdeo bissoondoyal,basdeo bissoondoyal,guy rozemont,veerasamy ringadoo,barlen vyapoory,leoville l'homme","manilall doctor,adolphe de plevitz,emmanuel anquetil,maurice cure,renganaden seeneevassen"],r:"remy ollier"},
+{q:"Name a district or outer island of Mauritius",t:["port louis,pamplemousses,flacq,grand port","plaines wilhems,moka,black river/riviere noire,savanne,rodrigues","riviere du rempart","agalega"],r:"saint brandon/cargados carajos"}
 );
 const TIER=[{n:"Common",p:10,s:8,e:"⬜",c:"--t0"},{n:"Known",p:25,s:10,e:"🟩",c:"--t1"},{n:"Rare",p:50,s:12,e:"🟦",c:"--t2"},{n:"Deep cut",p:80,s:15,e:"🟪",c:"--t3"},{n:"Rare air",p:100,s:20,e:"🌟",c:"--t4"}];
 
@@ -397,12 +417,66 @@ function playView(){const p=st.prompts[st.i];
   drawRing();const inp=$("ans");inp.focus();
   $("f").onsubmit=e=>{e.preventDefault();const v=inp.value.trim();if(!v)return;inp.value="";guess(v);};}
 function chip(text,note){const s=document.createElement("span");s.textContent=text;if(note)s.className="note";$("gs").prepend(s);}
-function guess(v){const p=st.prompts[st.i];const hit=lookup(p,v);
+function guess(v){if(RK.busy)return;const p=st.prompts[st.i];const hit=lookup(p,v);
   if(!hit){st.time=Math.max(0,st.time-PENALTY);chip(v);const f=$("f");f.classList.remove("shake");void f.offsetWidth;f.classList.add("shake");drawRing();return;}
   if(mode==="endless"){if(st.used.has(p.q+"|"+hit.key)){chip(hit.disp+" · used",true);return;}
     st.used.add(p.q+"|"+hit.key);const t=TIER[hit.tier];st.score+=t.p;st.time=Math.min(st.cap,st.time+t.s);st.log.push(hit.tier);
-    setAlt(metres(st.score));celebrate(hit.tier);nextEndless();toast(`${hit.disp} · ${t.n} +${t.p}`,TC[hit.tier]);return;}
+    stopTimer();setAlt(metres(st.score));rocket(hit.tier,true).then(()=>{celebrate(hit.tier);nextEndless();toast(`${hit.disp} · ${t.n} +${t.p}`,TC[hit.tier]);startTimer(endEndless);});return;}
   stopTimer();finishRound(hit);}
+// ---------- rocket launch: ground → space, by rarity ----------
+const RK={busy:false};
+const RKZ=[["Hop off the pad",.2],["Into the clouds",.44],["Stratosphere",.66],["Edge of space",.88],["Into orbit!",1.14]];
+const SKYR=[[0,"#6fb3ea","#d3eaf8"],[.35,"#3a83d4","#a6d1f2"],[.62,"#183c8c","#4c7cc6"],[.86,"#0a1236","#283070"],[1.05,"#02030a","#0b1030"]].map(([t,a,b])=>[t,hex(a),hex(b)]);
+function skyR(a){for(let i=0;i<SKYR.length-1;i++){const [t0,a0,b0]=SKYR[i],[t1,a1,b1]=SKYR[i+1];if(a<=t1){const k=Math.max(0,(a-t0)/(t1-t0));return [mix(a0,a1,k),mix(b0,b1,k)];}}return [SKYR[4][1],SKYR[4][2]];}
+function rocket(tier,quick){return new Promise(res=>{if(reduce){res();return;}
+  const c=$("rk"),x=c.getContext("2d"),dpr=Math.min(2,devicePixelRatio||1),W=innerWidth,H=innerHeight;c.width=W*dpr;c.height=H*dpr;c.hidden=false;c.classList.remove("out");RK.busy=true;
+  const [label,target]=RKZ[tier],dur=(quick?850:1400)+tier*(quick?200:360),hold=quick?500:1000,t0=performance.now();
+  const clouds=Array.from({length:12},()=>({x:Math.random()*1.2-.1,h:.3+Math.random()*.16,r:.1+Math.random()*.12}));
+  const stars=Array.from({length:160},()=>({x:Math.random(),y:Math.random(),s:Math.random()*1.6+.4}));
+  const smoke=[];let done=false;
+  const finish=()=>{if(done)return;done=true;c.classList.add("out");setTimeout(()=>{c.hidden=true;RK.busy=false;res();},430);};
+  c.onclick=finish;
+  const S2=Math.min(W,H)*.055,GY=H*.8,SPAN=H*2.7;
+  const yw=(h,a)=>GY+(a-h)*SPAN;
+  function draw(now){const el=now-t0,k=Math.min(1,el/dur);
+    const e=k<.18?Math.pow(k/.18,2)*.06:.06+(1-Math.pow(1-(k-.18)/.82,3))*.94,a=target*e;
+    x.setTransform(dpr,0,0,dpr,0,0);
+    const [top,bot]=skyR(a);const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,rgb(top));g.addColorStop(1,rgb(bot));x.fillStyle=g;x.fillRect(0,0,W,H);
+    const sa=Math.max(0,Math.min(1,(a-.6)/.35));if(sa>0){for(const st of stars){x.fillStyle=`rgba(255,255,255,${sa*.9})`;x.fillRect(st.x*W,st.y*H,st.s,st.s);}}
+    // the Earth's curve appears near space
+    if(a>.78){const ea=Math.min(1,(a-.78)/.3),R=Math.max(W,H)*1.6,cy=H*1.05+R-(ea*H*.28);
+      const atm=x.createRadialGradient(W/2,cy,R*.98,W/2,cy,R*1.06);atm.addColorStop(0,"rgba(110,180,255,.9)");atm.addColorStop(1,"rgba(110,180,255,0)");
+      x.fillStyle=atm;x.beginPath();x.arc(W/2,cy,R*1.06,0,7);x.fill();
+      const og=x.createLinearGradient(0,cy-R,0,cy-R+H*.3);og.addColorStop(0,"#2c6fd0");og.addColorStop(1,"#0d2a66");x.fillStyle=og;x.beginPath();x.arc(W/2,cy,R,0,7);x.fill();}
+    // moon for rare air
+    if(a>1){const ma=Math.min(1,(a-1)/.1);x.globalAlpha=ma;x.fillStyle="#e9e6dc";x.beginPath();x.arc(W*.78,H*.2,S2*1.5,0,7);x.fill();x.fillStyle="rgba(0,0,0,.12)";[[-.4,-.2,.35],[.3,.3,.25],[.1,-.5,.18]].forEach(([dx,dy,rr])=>{x.beginPath();x.arc(W*.78+dx*S2*1.5,H*.2+dy*S2*1.5,rr*S2*1.5,0,7);x.fill();});x.globalAlpha=1;}
+    // ground: sea, sugar-cane fields and a Le Morne-shaped mountain
+    const gy=yw(0,a);if(gy<H+260){x.fillStyle="#2a8fc9";x.fillRect(0,gy-16,W,30);
+      x.fillStyle="#356f2f";x.beginPath();x.moveTo(W*.62,gy-6);x.lineTo(W*.66,gy-H*.14);x.lineTo(W*.74,gy-H*.17);x.lineTo(W*.84,gy-H*.16);x.lineTo(W*.9,gy-6);x.fill();
+      x.fillStyle="#4c9a3b";x.beginPath();x.moveTo(0,gy);for(let i=0;i<=12;i++)x.lineTo(i/12*W,gy-8-Math.sin(i*1.3)*6);x.lineTo(W,H+300);x.lineTo(0,H+300);x.fill();
+      x.fillStyle="#7b8494";x.fillRect(W/2-S2*1.6,gy-6,S2*3.2,8);x.fillStyle="#9aa3b2";x.fillRect(W/2+S2*1.1,gy-S2*3.4,6,S2*3.4);}
+    // clouds you fly through
+    for(const cl of clouds){const cy2=yw(cl.h,a);if(cy2<-200||cy2>H+200)continue;const cx2=cl.x*W,rr=cl.r*W;const cg=x.createRadialGradient(cx2,cy2,0,cx2,cy2,rr);cg.addColorStop(0,"rgba(255,255,255,.85)");cg.addColorStop(1,"rgba(255,255,255,0)");x.fillStyle=cg;x.fillRect(cx2-rr,cy2-rr,rr*2,rr*2);}
+    // rocket
+    const lift=Math.min(1,e/.25),ry=GY-S2*1.4-lift*H*.28,rxp=W/2+Math.sin(now/90)*(k<1?1.4:.4);
+    if(k<1)for(let i=0;i<3;i++)smoke.push({x:rxp+(Math.random()-.5)*S2*.6,h:a-((ry+S2*1.3)-GY)/SPAN,r:S2*.35+Math.random()*S2*.3,vx:(Math.random()-.5)*1.4,life:1});
+    for(let i=smoke.length-1;i>=0;i--){const sm=smoke[i];sm.life-=.012;sm.r+=.35;sm.x+=sm.vx;if(sm.life<=0){smoke.splice(i,1);continue;}const sy=yw(sm.h,a);x.fillStyle=`rgba(235,235,240,${sm.life*.5*Math.max(.15,1-a)})`;x.beginPath();x.arc(sm.x,sy,sm.r,0,7);x.fill();}
+    const fl=k<1?S2*(1.3+Math.random()*.6):S2*.5;
+    const fg=x.createLinearGradient(0,ry+S2*1.3,0,ry+S2*1.3+fl);fg.addColorStop(0,"#fff3b0");fg.addColorStop(.4,"#ffb238");fg.addColorStop(1,"rgba(255,80,40,0)");
+    x.fillStyle=fg;x.beginPath();x.moveTo(rxp-S2*.32,ry+S2*1.25);x.quadraticCurveTo(rxp,ry+S2*1.3+fl*1.2,rxp+S2*.32,ry+S2*1.25);x.fill();
+    x.fillStyle="#e2483f";x.beginPath();x.moveTo(rxp-S2*.42,ry+S2*.5);x.lineTo(rxp-S2*.85,ry+S2*1.35);x.lineTo(rxp-S2*.42,ry+S2*1.1);x.fill();
+    x.beginPath();x.moveTo(rxp+S2*.42,ry+S2*.5);x.lineTo(rxp+S2*.85,ry+S2*1.35);x.lineTo(rxp+S2*.42,ry+S2*1.1);x.fill();
+    x.fillStyle="#f5f7fb";x.beginPath();x.moveTo(rxp,ry-S2*1.6);x.bezierCurveTo(rxp+S2*.62,ry-S2*.9,rxp+S2*.48,ry+S2*.6,rxp+S2*.42,ry+S2*1.25);x.lineTo(rxp-S2*.42,ry+S2*1.25);x.bezierCurveTo(rxp-S2*.48,ry+S2*.6,rxp-S2*.62,ry-S2*.9,rxp,ry-S2*1.6);x.fill();
+    x.fillStyle="#e2483f";x.beginPath();x.moveTo(rxp,ry-S2*1.6);x.bezierCurveTo(rxp+S2*.38,ry-S2*1.2,rxp+S2*.5,ry-S2*.9,rxp+S2*.52,ry-S2*.75);x.lineTo(rxp-S2*.52,ry-S2*.75);x.bezierCurveTo(rxp-S2*.5,ry-S2*.9,rxp-S2*.38,ry-S2*1.2,rxp,ry-S2*1.6);x.fill();
+    x.fillStyle="#2f6fd6";x.strokeStyle="#c9d3e3";x.lineWidth=2;x.beginPath();x.arc(rxp,ry-S2*.2,S2*.22,0,7);x.fill();x.stroke();
+    // altitude readout + result label
+    x.textAlign="center";x.fillStyle="rgba(255,255,255,.85)";x.font=`700 ${Math.round(S2*.32)}px "JetBrains Mono", monospace`;
+    x.fillText(a>=1?"SPACE":`${Math.round(100*Math.pow(a,2.3))} km`,W/2,ry+S2*2.7+fl*.2);
+    if(k>.7){const la=Math.min(1,(k-.7)/.3+(el>dur?1:0));x.globalAlpha=la;x.shadowColor="rgba(0,0,0,.55)";x.shadowBlur=14;x.fillStyle=TC[tier];x.font=`900 ${Math.round(Math.min(W*.08,46))}px Unbounded, "Arial Black", sans-serif`;x.fillText(label,W/2,H*.16);
+      x.fillStyle="#fff";x.font=`700 ${Math.round(Math.min(W*.04,20))}px Figtree, system-ui, sans-serif`;x.fillText(`${TIER[tier].n} · +${TIER[tier].p} pts   (tap to skip)`,W/2,H*.16+Math.min(W*.05,30));x.globalAlpha=1;x.shadowBlur=0;}
+    if(el>dur+hold)finish();
+    if(!done)requestAnimationFrame(draw);}
+  requestAnimationFrame(draw);});}
 function celebrate(tier){if(tier>=3)burst(TC[tier],tier===4?140:60);else if(tier===2)burst(TC[2],24);}
 function toast(text,c){const d=document.createElement("div");d.className="toast";d.style.setProperty("--c",c);d.textContent=text;card.appendChild(d);setTimeout(()=>d.remove(),1500);}
 function countUp(el,from,to,suffix){if(!el)return;if(reduce){el.textContent=fmt(to)+suffix;return;}const t0=performance.now();
@@ -437,29 +511,44 @@ function welcomeView(){stopTimer();mode="levels";setScene(null);
     if(API){try{const j=await api({action:"register",id:me.id,username:u});applyMe(j.me);board=j.board;}catch(err){$("err").textContent=err.message==="Failed to fetch"?"Can't reach the leaderboard. Check your connection.":err.message;btn.disabled=false;return;}}
     store.set("altitude.me",me);homeView();};}
 function splitName(n){const out=[];let cur="";for(const w of n.split(" ")){if(cur&&(cur+" "+w).length>14){out.push(cur);cur=w;}else cur=(cur+" "+w).trim();}if(cur)out.push(cur);return out;}
-function mapSVG(players,meU,next){const W=360,H=1060,base=[180,H-26],top=60;const p=prog();
-  const nodes=LV.map((L,i)=>[i===LV.length-1?186:(i%2?226:150),H-90-(i/(LV.length-1))*(H-90-top)]);
-  const at=t=>{if(t<=0)return base.slice();for(let i=0;i<LV.length;i++){const lo=i?CUM[i-1]:0,a=i?nodes[i-1]:base,b=nodes[i];if(t<=CUM[i]){const f=(t-lo)/(CUM[i]-lo);return [a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f];}}
-    return [nodes[LV.length-1][0],nodes[LV.length-1][1]-Math.min(34,(t-CUM[CUM.length-1])/40)];};
-  const route=[base,...nodes].map((q,i)=>(i?"L":"M")+q[0].toFixed(1)+" "+q[1].toFixed(1)).join(" ");
-  const mt=players.find(x=>x.u===meU);const mine=at(mt?mt.t:0);
-  // my trail = route up to my point
-  let trail="M"+base.join(" ");for(let i=0;i<LV.length;i++){if((mt?mt.t:0)>=CUM[i])trail+=" L"+nodes[i].join(" ");else break;}trail+=" L"+mine.map(v=>v.toFixed(1)).join(" ");
-  const peaks=nodes.map((q,i)=>{const L=LV[i],s=p.stars[i]||0,lock=i>next,sz=12+i*1.1,left=q[0]<180,ln=splitName(L.n);
-    const tx=i===LV.length-1?q[0]:left?q[0]-sz-8:q[0]+sz+8,anc=i===LV.length-1?"middle":left?"end":"start",ty=i===LV.length-1?q[1]-sz-26:q[1]-4;
-    return `<g class="pk${lock?" lk":""}${i===next?" nx":""}" data-i="${i}" ${lock?"":`tabindex="0" role="button" aria-label="Replay ${esc(L.n)}"`}>
-      <path d="M${q[0]-sz} ${q[1]+sz*.55} L${q[0]} ${q[1]-sz} L${q[0]+sz} ${q[1]+sz*.55}Z" fill="${s?"#fff":lock?"rgba(255,255,255,.18)":"rgba(255,255,255,.55)"}"/>
-      ${i===next?`<circle cx="${q[0]}" cy="${q[1]-sz*.1}" r="${sz+9}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="3 4"/>`:""}
-      <text x="${tx}" y="${ty}" text-anchor="${anc}" class="pkn">${ln.map((t,k)=>`<tspan x="${tx}" dy="${k?12:0}">${esc(t)}</tspan>`).join("")}</text>
-      <text x="${tx}" y="${ty+ln.length*12+2}" text-anchor="${anc}" class="pkh">${fmt(L.h)} m${s?" "+"★".repeat(s):""}</text></g>`;}).join("");
-  const spots={};
-  const avs=players.slice(0,40).map(pl=>{let [x,y]=at(pl.t);const k=Math.round(x/8)+"_"+Math.round(y/8);const n=spots[k]=(spots[k]||0)+1;x+=(n-1)*15;const isMe=pl.u===meU;
-    return `<g class="av${isMe?" me":""}"><title>${esc(pl.u)} · ${fmt(pl.t)} pts</title><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${isMe?12:10}" fill="hsl(${hue(pl.u)} 70% 60%)" stroke="${isMe?"#fff":"#0b1020"}" stroke-width="${isMe?3:2}"/><text x="${x.toFixed(1)}" y="${(y+3.6).toFixed(1)}" text-anchor="middle" class="avi">${esc(pl.u[0].toUpperCase())}</text>${isMe||players.length<9?`<text x="${x.toFixed(1)}" y="${(y+(isMe?26:23)).toFixed(1)}" text-anchor="middle" class="avn">${esc(pl.u)}</text>`:""}</g>`;}).join("");
-  return `<svg id="map" class="map" viewBox="0 0 ${W} ${H}" role="img" aria-label="Mountain map with every player's position">
-    <path d="${route}" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="3" stroke-dasharray="2 7" stroke-linecap="round"/>
-    <path d="${trail}" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>
-    <g class="pkb"><circle cx="${base[0]}" cy="${base[1]}" r="6" fill="#fff"/><text x="${base[0]+12}" y="${base[1]+4}" class="pkh">Base camp</text></g>
-    ${peaks}${avs}</svg>`;}
+function mapSVG(players,meU,next){const W=360,H=660,base=622,sumY=70,sx=180,p=prog(),END=CUM[CUM.length-1];
+  const N=LV.length,yAt=f=>base-f*(base-sumY),fOf=t=>{if(t<=0)return 0;for(let i=0;i<N;i++){const lo=i?CUM[i-1]:0;if(t<=CUM[i])return (i+(t-lo)/(CUM[i]-lo))/N;}return 1;},lx=y=>sx-(y-sumY)/(base-sumY)*sx,rx=y=>sx+(y-sumY)/(base-sumY)*(W-sx);
+  const r=rng("massif");const jag=(fromX,fromY,toX,toY,n,amp)=>{const out=[];for(let i=1;i<n;i++){const f=i/n;out.push([fromX+(toX-fromX)*f+(r()-.5)*amp,fromY+(toY-fromY)*f+(r()-.5)*amp*.6]);}return out;};
+  const L=jag(0,base,sx,sumY,16,16),R=jag(sx,sumY,W,base,16,16);
+  const P=a=>a.map(q=>q[0].toFixed(1)+" "+q[1].toFixed(1)).join(" L");
+  const body=`M0 ${base} L${P(L)} L${sx} ${sumY} L${P(R)} L${W} ${base} Z`;
+  const snowY=sumY+170,snowL=lx(snowY),snowR=rx(snowY);
+  const snowEdge=[];for(let i=0;i<=10;i++){const x=snowR-(snowR-snowL)*i/10;snowEdge.push([x,snowY+(i%2?-7:4)+(r()-.5)*8]);}
+  const snow=`M${sx} ${sumY} L${P(R.filter(q=>q[1]<snowY))} L${snowEdge.map(q=>q[0].toFixed(1)+" "+q[1].toFixed(1)).join(" L")} L${P(L.filter(q=>q[1]<snowY).reverse())} Z`;
+  // camps = one flag per peak/level
+  const flags=LV.map((Lv,i)=>{const f=(i+1)/N,y=yAt(f),top=i===LV.length-1,fx=top?sx:rx(y)-18,s2=p.stars[i]||0,lock=i>next;
+    const col=s2?"#ffcf4a":i===next?"var(--accent)":lock?"rgba(255,255,255,.35)":"#fff";
+    const out=!top&&rx(y)<W-96,tx=top?sx:out?rx(y)+8:fx-9,anc=top?"middle":out?"start":"end",ty=top?y-46:y-6;
+    return `<g class="pk${lock?" lk":""}" data-i="${i}" ${lock?"":`tabindex="0" role="button" aria-label="Replay ${esc(Lv.n)}"`}>
+      <line x1="${fx}" y1="${y}" x2="${fx}" y2="${y-26}" stroke="rgba(255,255,255,.75)" stroke-width="1.6"/>
+      <path d="M${fx} ${y-26} L${fx+15} ${y-21} L${fx} ${y-16}Z" fill="${col}"/>
+      ${i===next?`<circle cx="${fx}" cy="${y-13}" r="17" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-dasharray="3 4"/>`:""}
+      <text x="${tx}" y="${ty}" text-anchor="${anc}" class="pkn">${esc(Lv.n.length>18?Lv.n.replace("Piton de la Petite Rivière Noire","Piton P. Riv. Noire"):Lv.n)}</text>
+      <text x="${tx}" y="${ty+11}" text-anchor="${anc}" class="pkh">${fmt(Lv.h)} m${s2?" "+"★".repeat(s2):""}</text></g>`;}).join("");
+  // climbers
+  const placed=[];
+  const figs=players.slice(0,60).map(pl=>{const f=fOf(pl.t);let y=yAt(f);let x=Math.max(lx(y)+16,f>=1?sx-30:0);
+    let guard=0;while(placed.some(q=>Math.abs(q[0]-x)<30&&Math.abs(q[1]-y)<44)&&guard++<12){x+=30;if(x>sx+40){x=lx(y)+16;y+=24;}}
+    placed.push([x,y]);const isMe=pl.u===meU,sc=isMe?1.3:1,c=`hsl(${hue(pl.u)} 75% 62%)`,nm=pl.u,w=nm.length*6.2+14;
+    return `<g class="sf${isMe?" me":""}" data-y="${y.toFixed(0)}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${sc})" style="--c:${c}"><title>${esc(nm)} · ${fmt(pl.t)} pts</title><g class="bob">
+      <path class="body" d="M-6 0 L0 -11 L6 -1 M0 -11 L0 -23 M-7 -15 L0 -20 L6 -27"/><line class="body" x1="6" y1="-27" x2="9" y2="-4" opacity=".8"/>
+      <circle class="hd" cx="0" cy="-27.5" r="4.6"/>
+      <g class="nm" transform="translate(${(Math.min(Math.max(x,w*sc/2+4),W-w*sc/2-4)-x)/sc} -42)"><rect x="${(-w/2).toFixed(1)}" y="-9" width="${w.toFixed(1)}" height="14" rx="7"/><text x="0" y="1.5" text-anchor="middle">${esc(nm)}</text></g></g></g>`;}).join("");
+  return `<svg id="map" class="map" viewBox="0 0 ${W} ${H}" role="img" aria-label="One giant mountain with every player's climber placed by total points">
+    <defs><linearGradient id="rock" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6b7896"/><stop offset=".55" stop-color="#3a4462"/><stop offset="1" stop-color="#1a2036"/></linearGradient>
+      <linearGradient id="snowg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d6e2f2"/></linearGradient></defs>
+    <path d="${body}" fill="url(#rock)"/>
+    <path d="M${sx} ${sumY} L${W} ${base} L${sx+30} ${base} Z" fill="rgba(0,0,0,.2)"/>
+    ${[0.3,0.5,0.7,0.85].map(f=>{const y=yAt(1-f);return `<path d="M${(lx(y)+20).toFixed(1)} ${y.toFixed(1)} Q ${sx} ${(y-14).toFixed(1)} ${(rx(y)-20).toFixed(1)} ${(y+6).toFixed(1)}" stroke="rgba(255,255,255,.06)" stroke-width="2" fill="none"/>`;}).join("")}
+    <path d="${snow}" fill="url(#snowg)" opacity=".95"/>
+    <rect x="0" y="${base}" width="${W}" height="${H-base}" fill="#151a2c"/>
+    <text x="10" y="${base+22}" class="pkh">Base camp</text><text x="${W-10}" y="${base+22}" text-anchor="end" class="pkh">Each flag is a camp</text>
+    ${flags}${figs}</svg>`;}
 function homeView(){stopTimer();mode="levels";setScene(null);const me=store.get("altitude.me");if(!me)return welcomeView();
   const total=myTotal(),stars=myStars(),next=unlockedUpTo(),done=(prog().stars[LV.length-1]||0)>0;
   let players=(board||[]).map(x=>({...x}));const mine=players.find(x=>x.u===me.u);
@@ -470,13 +559,13 @@ function homeView(){stopTimer();mode="levels";setScene(null);const me=store.get(
   card.innerHTML=`<div class="top"><div style="min-width:0"><div class="lbl">Climber</div><div class="who"><i style="background:hsl(${hue(me.u)} 70% 60%)">${esc(me.u[0].toUpperCase())}</i>${esc(me.u)}</div></div>
       <div style="text-align:right"><div class="lbl">Total</div><div class="score">${fmt(total)} pts · <span style="color:var(--t4)">${stars}★</span></div></div></div>
     <button class="primary wide" id="climb">${done?"Replay Mount Everest":`Climb ${esc(nl.n)}`} <span style="opacity:.6;font-weight:500">${fmt(nl.h)} m</span> ${arrowSm}</button>
-    <p class="sub" style="font-size:.88rem;margin-top:-6px">Your position on the map is your total: the sum of your best score on every peak. Tap any peak you've reached to replay it.</p>
+    <p class="sub" style="font-size:.88rem;margin-top:-6px">Everyone climbs the same giant mountain. Your height is your total: the sum of your best score on every camp. Tap any flag you've reached to replay it.</p>
     <div class="mapwrap">${mapSVG(players,me.u,next)}</div>
     <div><div class="lbl" style="margin-bottom:8px">Leaderboard</div><ol class="lb">${players.slice(0,50).map((pl,i)=>`<li class="${pl.u===me.u?"me":""}"><span class="rk">${i+1}</span><i style="background:hsl(${hue(pl.u)} 70% 60%)">${esc(pl.u[0].toUpperCase())}</i><b>${esc(pl.u)}</b><span class="lbp">${pl.p?esc(LV[Math.min(pl.p,LV.length)-1].n):"Base camp"}</span><span class="lbs">${fmt(pl.t)} pts</span></li>`).join("")}</ol>
       ${API?"":`<p class="sub" style="font-size:.85rem;margin-top:10px">The shared leaderboard isn't connected yet, so only you appear here.</p>`}</div>`;
   $("climb").onclick=()=>levelIntro(done?LV.length-1:next);
   card.querySelectorAll(".pk:not(.lk)").forEach(g=>{const go=()=>levelIntro(+g.dataset.i);g.onclick=go;g.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go();}};});
-  const mw=card.querySelector(".mapwrap");const meAv=card.querySelector(".av.me circle");if(mw&&meAv){const y=+meAv.getAttribute("cy")/1060*mw.scrollHeight;mw.scrollTop=Math.max(0,y-mw.clientHeight*.6);}}
+  const mw=card.querySelector(".mapwrap");const meG=card.querySelector(".sf.me");if(mw&&meG){const y=+meG.dataset.y/660*mw.scrollHeight;mw.scrollTop=Math.max(0,y-mw.clientHeight*.55);}}
 function levelIntro(i){stopTimer();mode="levels";const L=LV[i];setScene(L);const best=prog().best[i];
   card.innerHTML=`<div class="top"><div class="lbl">Level ${i+1} of ${LV.length} · ${esc(L.c)}</div><button class="ghost sm" id="back">Home</button></div>
     <p class="hero">${esc(L.n)}</p>
@@ -489,7 +578,7 @@ function startLevel(i){stopTimer();mode="levels";const L=LV[i];setScene(L);
   st={li:i,L,prompts:pickPrompts(PER),i:0,score:0,log:[],time:ROUND};roundStart();}
 function roundStart(){st.time=ROUND;playView();startTimer(()=>finishRound(null));}
 function finishRound(hit){const p=st.prompts[st.i];build(p);const before=altFor(st.score,st.L);
-  if(hit){st.score+=TIER[hit.tier].p;st.log.push(hit.tier);celebrate(hit.tier);}else st.log.push(-1);
+  if(hit){st.score+=TIER[hit.tier].p;st.log.push(hit.tier);}else st.log.push(-1);
   const after=altFor(st.score,st.L);setAlt(after);
   const c=hit?TC[hit.tier]:"#8592a8",t=hit?TIER[hit.tier]:null;
   const deep=shuffled(p.t[3].split(",").map(s=>title(s.split("/")[0].trim())),Math.random).slice(0,3).join(" · ");
@@ -507,8 +596,9 @@ function finishRound(hit){const p=st.prompts[st.i];build(p);const before=altFor(
       <p>${left?`<b>${left}</b> more points to the summit of ${esc(st.L.n)}.`:`<b class="gold">Summit reached.</b> Every extra point now earns stars.`}</p>
     </div>
     <button class="primary" id="nx">${last?"Finish climb":"Next prompt"} ${arrowSm}</button>`;
-  if(t)countUp($("gm"),0,after-before,"");
-  const nx=$("nx");nx.focus();nx.onclick=()=>{if(last)levelEnd();else{st.i++;roundStart();}};}
+  const nx=$("nx");nx.onclick=()=>{if(last)levelEnd();else{st.i++;roundStart();}};
+  const reveal=()=>{if(t)countUp($("gm"),0,after-before,"");if(hit)celebrate(hit.tier);nx.focus();};
+  if(hit)rocket(hit.tier,false).then(reveal);else reveal();}
 function profileSVG(log,L){const W=320,H=150,x0=14,x1=306,y0=128;let cum=0;const pts=[[x0,y0]];const n=log.length;
   const final=altFor(log.reduce((a,l)=>a+(l<0?0:TIER[l].p),0),L);const top=Math.max(L.h,final)*1.08;const ys=m=>y0-(m/top)*(y0-14);
   log.forEach((l,i)=>{cum+=l<0?0:TIER[l].p;pts.push([x0+(i+1)*(x1-x0)/n,ys(altFor(cum,L))]);});
