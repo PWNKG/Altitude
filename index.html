@@ -410,7 +410,7 @@ function countUp(el,from,to,suffix){if(!el)return;if(reduce){el.textContent=fmt(
 
 // ---------- levels ----------
 // ---------- players & shared leaderboard (Google Sheet via Apps Script) ----------
-const API=""; // paste the Apps Script web-app URL here
+const API=/github\.io$/.test(location.hostname)?"https://script.google.com/macros/s/AKfycbzBKkcPFI60ctoiAFuBK6Z3uvcHc8HpJ9-g_c1NUPkYyLRH_wpvqtIScXv3Zj6gF5Ci/exec":""; // shared leaderboard only on the GitHub Pages site
 const CUM=LV.reduce((a,L,i)=>(a.push((a[i-1]||0)+L.req),a),[]);
 let board=null;
 const newId=()=>{try{return crypto.randomUUID().replace(/-/g,"")}catch(e){return Array.from({length:32},()=>"0123456789abcdef"[Math.floor(Math.random()*16)]).join("")}};
