@@ -1,4 +1,8 @@
 /**
+ * @OnlyCurrentDoc  (limits this script to THIS spreadsheet only — it cannot open your other files)
+ */
+
+/**
  * Altitude — leaderboard backend (Google Apps Script bound to a Google Sheet).
  * Deploy: Deploy → New deployment → Web app → Execute as: Me, Who has access: Anyone.
  * Each player's "id" is a secret device token; it never leaves this sheet.
@@ -6,6 +10,7 @@
 const SHEET = 'players';
 const REQ = [50, 80, 105, 130, 150, 170, 190, 210, 230, 255, 280, 310, 340]; // points to summit each peak
 const MAX_SCORE = 500;
+const MAX_PLAYERS = 300; // stops anyone flooding the sheet with fake players
 
 function sheet_() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -54,6 +59,7 @@ function doPost(e) {
       const u = String(b.username || '').trim();
       if (!/^[A-Za-z0-9_]{3,16}$/.test(u)) throw new Error('Use 3–16 letters, numbers or _');
       if (rows.slice(1).some(r => String(r[1]).toLowerCase() === u.toLowerCase())) throw new Error('That name is taken');
+      if (rows.length - 1 >= MAX_PLAYERS) throw new Error('The leaderboard is full');
       const now = new Date();
       sh.appendRow([id, u, 0, '{}', '{}', now, now]);
       return out_({ ok: true, me: { u, total: 0, stars: {}, best: {} }, board: board_(rows_()) });
