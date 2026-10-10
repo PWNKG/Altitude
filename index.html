@@ -278,15 +278,48 @@ const TC=["#c3ccd8","#4fe0a0","#6aa8ff","#b48cff","#ffcf4a"];
 // ---------- matching ----------
 const norm=s=>s.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/&/g,"and").trim().replace(/^the\s+/,"").replace(/[^a-z0-9+#]/g,"");
 const title=s=>s.replace(/(^|[\s-])([a-z])/g,(m,a,b)=>a+b.toUpperCase());
-function build(p){if(p.map)return p.map;const m={};
-  const add=(item,tier)=>{const al=item.split("/");const disp=title(al[0]);for(const a of al){const k=norm(a);if(k&&!(k in m))m[k]={tier,disp};}};
-  p.t.forEach((s,i)=>s.split(",").forEach(it=>add(it.trim(),i)));add(p.r,4);p.map=m;return m;}
+const phon=k=>k.replace(/ph/g,"f").replace(/kh/g,"k").replace(/gh/g,"g").replace(/sh/g,"s").replace(/ch/g,"c").replace(/ck/g,"k").replace(/ee|ea|ie|ey/g,"i").replace(/oo|ou/g,"u").replace(/y/g,"i").replace(/w/g,"v").replace(/z/g,"s").replace(/q/g,"k").replace(/aa/g,"a").replace(/(.)\1+/g,"$1").replace(/h/g,"").replace(/e$/,"");
+function build(p){if(p.map)return p.map;const m={},ph={},words={};
+  const add=(item,tier)=>{const al=item.split("/");const disp=title(al[0]);for(const a of al){const k=norm(a);if(!k)continue;if(!(k in m))m[k]={tier,disp};const f=phon(k);if(f&&!(f in ph))ph[f]={tier,disp,key:k};
+      for(const w of a.toLowerCase().split(/[\s\-]+/)){const wn=norm(w);if(wn.length<4)continue;(words[wn]=words[wn]||new Set()).add(disp+"|"+tier);}}};
+  p.t.forEach((s2,i)=>s2.split(",").forEach(it=>add(it.trim(),i)));add(p.r,4);
+  const qw=new Set(p.q.toLowerCase().split(/[^a-z]+/).map(norm));const uw={};for(const w in words){if(words[w].size>2||qw.has(w)||qw.has(w.replace(/s$/,"")))continue;const opts=[...words[w]].map(x=>{const [disp,tier]=x.split("|");return {disp,tier:+tier};}).sort((a,b)=>a.tier-b.tier);uw[w]=opts[0];}
+  p.map=m;p.ph=ph;p.uw=uw;return m;}
 function lev(a,b,max){if(Math.abs(a.length-b.length)>max)return max+1;let prev=Array.from({length:b.length+1},(_,i)=>i);
   for(let i=1;i<=a.length;i++){const cur=[i];let best=i;for(let j=1;j<=b.length;j++){cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));best=Math.min(best,cur[j]);}if(best>max)return max+1;prev=cur;}return prev[b.length];}
-function lookup(p,input){const m=build(p);const k=norm(input);if(!k)return null;if(m[k])return {...m[k],key:k};
-  for(const v of [k.replace(/ies$/,"y"),k.replace(/es$/,""),k.replace(/s$/,""),k+"s"])if(m[v])return {...m[v],key:v};
-  if(k.length>=5){const max=k.length>=9?2:1;let best=null,bd=max+1;for(const key in m){if(key.length<5)continue;const d=lev(k,key,max);if(d<bd){bd=d;best=key;}}if(best)return {...m[best],key:best};}
+const tol=n=>n>=12?3:n>=8?2:n>=5?1:0;
+function lookup(p,input){const m=build(p);const k=norm(input);if(!k)return null;
+  const hit=(e,key,fixed)=>({...e,key:key||norm(e.disp),fixed:!!fixed});
+  if(m[k])return hit(m[k],k,false);
+  for(const v of [k.replace(/ies$/,"y"),k.replace(/es$/,""),k.replace(/s$/,""),k+"s",k+"es"])if(m[v])return hit(m[v],v,false);
+  // same sound, different spelling (Shahrukh / Sharukh, Rajkumar / Rajkummar, colour / color…)
+  const f=phon(k);if(f.length>=3&&p.ph[f])return hit(p.ph[f],p.ph[f].key,true);
+  // typo tolerance, scaled to length
+  const t=tol(k.length);if(t){let best=null,bd=t+1;for(const key in m){if(key.length<4)continue;const d=lev(k,key,t);if(d<bd){bd=d;best=key;}}
+    if(!best&&f.length>=4){for(const key in p.ph){const d=lev(f,key,t);if(d<bd){bd=d;best=p.ph[key].key;}}}
+    if(best)return hit(m[best],best,true);}
+  // a single distinctive word: "Kahlo", "Ramgoolam", "Mughal"…
+  if(k.length>=5&&p.uw[k])return hit(p.uw[k],null,true);
+  const t2=tol(k.length);if(k.length>=5){for(const w in p.uw){if(lev(k,w,Math.min(t2,1))<=Math.min(t2,1))return hit(p.uw[w],null,true);}}
   return null;}
+// ---------- Wikipedia check for real answers missing from the lists (GitHub site only) ----------
+const KW={"Name a fruit":["fruit"],"Name a dog breed":["dog breed","breed of dog"],"Name a sport played with a ball":["ball sport","ball game","team sport","sport"],"Name a vegetable":["vegetable"],"Name a musical instrument":["instrument"],"Name a bird":["bird","species of"],"Name a Greek god, goddess or titan":["greek god","greek mythology","titan","deity"],"Name a programming language":["programming language"],"Name a spice or herb":["spice","herb","seasoning"],"Name a sea creature":["marine","fish","shark","whale","crustacean","mollus","cephalopod","jellyfish","coral","echinoderm","sea "],"Name a cheese":["cheese"],"Name a gemstone":["gemstone","gem","mineral"],"Name a bone in the human body":["bone"],"Name a currency":["currency"],"Name a kind of tree":["tree","genus of","species of"],"Name a colour":["colour","color","shade"],"Name a shape (2D or 3D)":["polygon","polyhedron","shape","geometr","curve"],"Name a unit of measurement":["unit of"],"Name an animal you might see on an African safari":["africa&species","african&mammal","africa&bird","antelope"],"Name a breed of cat":["cat breed","breed of cat","breed of domestic cat"],"Name a car brand":["automobile","car manufacturer","automaker","marque","vehicle manufacturer"],"Name a pasta shape":["pasta"],"Name a type of bread":["bread"],"Name a cocktail":["cocktail","mixed drink"],"Name a board game":["board game"],"Name a style of dance":["dance"],"Name a martial art or combat sport":["martial art","combat sport","fighting"],"Name a flower":["flower","flowering plant","genus of","species of plant"],"Name a famous painter":["painter","artist"],"Name a classical composer":["composer"],"Name a language":["language"],"Name an ocean or sea":["sea","ocean","gulf"],"Name a river":["river"],"Name a desert":["desert"],"Name a mountain range":["mountain range","mountains","range"],"Name a dinosaur":["dinosaur"],"Name an insect":["insect","beetle","moth","butterfly","species of fly","true bug"],"Name a snake":["snake","viper","python","cobra","boa"],"Name a reptile that isn't a snake":["lizard","turtle","tortoise","crocodil","gecko","skink","iguana","chameleon"],"Name a tool you'd find in a toolbox":["tool"],"Name a kitchen utensil":["utensil","kitchen","cookware"],"Name a piece of furniture":["furniture","chair","table","bed","cabinet","sofa","seat"],"Name an item of clothing":["garment","clothing","apparel"],"Name a type of footwear":["shoe","footwear","boot","sandal"],"Name a winter sport":["winter sport","skiing","snow","ice "],"Name a card game":["card game"],"Name a famous scientist":["scientist","physicist","chemist","biologist","mathematician","astronomer","naturalist","inventor","geologist","physician"],"Name a philosopher":["philosopher"],"Name a type of cloud":["cloud"],"Name a rock or mineral":["rock","mineral"],"Name an organ of the human body":["organ","gland"],"Name a muscle in the human body":["muscle"],"Name a tech company":["technology company","software","company","corporation","manufacturer"],"Name a messaging or social media app":["social media","messaging","social network","instant messag","app"],"Name a pizza topping":["food","cheese","sausage","vegetable","meat","fish","fruit","herb","mushroom"],"Name a sauce or condiment":["sauce","condiment","paste","dressing","dip","relish"],"Name a dessert":["dessert","cake","pastry","pudding","sweet","confection"],"Name a Japanese food":["japanese&dish","japanese&food","japanese cuisine","japanese&confection","japanese&sweet"],"Name an Indian dish":["indian&dish","indian cuisine","indian&food","indian&sweet","south asian&dish"],"Name a town or village in Mauritius":["mauritius&village","mauritius&town","mauritius&city","mauritius&locality"],"Name a Bollywood actor":["indian actor","hindi film"],"Name a Bollywood actress":["indian actress","hindi film&actress"],"Name a Bollywood film":["hindi-language","hindi film"],"Name a Shah Rukh Khan film":["shah rukh khan"],"Name a Bollywood film director":["indian&director","indian filmmaker"],"Name a Bollywood playback singer":["playback singer"],"Name a Bollywood music composer":["music director","indian&composer"],"Name an Amitabh Bachchan film":["amitabh bachchan"],"Name a Mauritian dish or street food":["mauritian","mauritius&dish"],"Name a beach in Mauritius":["mauritius&beach"],"Name a mountain, peak or crater in Mauritius":["mauritius&mountain","mauritius&peak","mauritius&crater"],"Name a Mauritian singer or band":["mauritian&singer","mauritian&musician","mauritian&band","mauritius&band"],"Name an animal from Mauritius or Rodrigues (living or extinct)":["mauritius&species","mauritius&endemic","rodrigues&species"],"Name a famous Mauritian":["mauritian"]};
+const WIKI_OK=/github\.io$/.test(location.hostname);
+async function wikiCheck(p,input){const kw=KW[p.q];if(!kw||!WIKI_OK)return null;
+  const cacheKey="altitude.wiki";let cache={};try{cache=JSON.parse(localStorage.getItem(cacheKey)||"{}")}catch(e){}
+  const ck=p.q+"|"+norm(input);if(ck in cache)return cache[ck];
+  const timeout=(ms,pr)=>Promise.race([pr,new Promise((_,r)=>setTimeout(()=>r(new Error("slow")),ms))]);
+  const k=norm(input),hint=kw[0].split("&")[0];
+  const okTitle=t=>{const b=norm(t.replace(/\s*\(.*\)$/,""));return b===k||b.includes(k)&&k.length>=4||k.includes(b)&&b.length>=4||lev(k,b,tol(k.length))<=tol(k.length);};
+  const okText=txt=>kw.some(w=>w.split("&").every(part=>txt.includes(part)));
+  let res=null;
+  try{const sr=await timeout(3500,fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(input+" "+hint)}&srlimit=4&format=json&origin=*`).then(r=>r.json()));
+    const titles=(sr.query&&sr.query.search||[]).map(x=>x.title).filter(okTitle).slice(0,3);
+    const sums=await timeout(3500,Promise.all(titles.map(t=>fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(t)}`).then(r=>r.ok?r.json():null).catch(()=>null))));
+    for(const sm of sums){if(!sm||sm.type==="disambiguation")continue;const txt=((sm.description||"")+" "+(sm.extract||"").slice(0,500)).toLowerCase();if(okText(txt)){res={tier:2,disp:sm.title.replace(/\s*\(.*\)$/,""),key:"wiki:"+norm(sm.title),wiki:true};break;}}
+  }catch(e){return null;}
+  cache[ck]=res;try{localStorage.setItem(cacheKey,JSON.stringify(cache))}catch(e){}
+  return res;}
 
 // ---------- helpers ----------
 const $=id=>document.getElementById(id);
@@ -417,8 +450,12 @@ function playView(){const p=st.prompts[st.i];
   drawRing();const inp=$("ans");inp.focus();
   $("f").onsubmit=e=>{e.preventDefault();const v=inp.value.trim();if(!v)return;inp.value="";guess(v);};}
 function chip(text,note){const s=document.createElement("span");s.textContent=text;if(note)s.className="note";$("gs").prepend(s);}
-function guess(v){if(RK.busy)return;const p=st.prompts[st.i];const hit=lookup(p,v);
+let checking=false;
+async function guess(v){if(RK.busy||checking)return;const p=st.prompts[st.i];let hit=lookup(p,v);
+  if(!hit&&KW[p.q]&&WIKI_OK){checking=true;stopTimer();const c=document.createElement("span");c.className="note";c.textContent=`Checking “${v}”…`;$("gs").prepend(c);
+    hit=await wikiCheck(p,v);c.remove();checking=false;if(!hit)startTimer(mode==="levels"?()=>finishRound(null):endEndless);}
   if(!hit){st.time=Math.max(0,st.time-PENALTY);chip(v);const f=$("f");f.classList.remove("shake");void f.offsetWidth;f.classList.add("shake");drawRing();return;}
+  hit.typed=v;
   if(mode==="endless"){if(st.used.has(p.q+"|"+hit.key)){chip(hit.disp+" · used",true);return;}
     st.used.add(p.q+"|"+hit.key);const t=TIER[hit.tier];st.score+=t.p;st.time=Math.min(st.cap,st.time+t.s);st.log.push(hit.tier);
     stopTimer();setAlt(metres(st.score));rocket(hit.tier,true).then(()=>{celebrate(hit.tier);nextEndless();toast(`${hit.disp} · ${t.n} +${t.p}`,TC[hit.tier]);startTimer(endEndless);});return;}
@@ -486,7 +523,7 @@ function countUp(el,from,to,suffix){if(!el)return;if(reduce){el.textContent=fmt(
 // ---------- players & shared leaderboard (Google Sheet via Apps Script) ----------
 const API=/github\.io$/.test(location.hostname)?"https://script.google.com/macros/s/AKfycbzBKkcPFI60ctoiAFuBK6Z3uvcHc8HpJ9-g_c1NUPkYyLRH_wpvqtIScXv3Zj6gF5Ci/exec":""; // shared leaderboard only on the GitHub Pages site
 const CUM=LV.reduce((a,L,i)=>(a.push((a[i-1]||0)+L.req),a),[]);
-let board=null;
+let board=null,lbDown=false;
 const newId=()=>{try{return crypto.randomUUID().replace(/-/g,"")}catch(e){return Array.from({length:32},()=>"0123456789abcdef"[Math.floor(Math.random()*16)]).join("")}};
 async function api(body){const r=await fetch(API,{method:"POST",body:JSON.stringify(body)});const j=await r.json();if(!j.ok)throw new Error(j.error||"Server error");return j;}
 function applyMe(m){if(m)store.set("altitude.prog",{stars:m.stars||{},best:m.best||{}});}
@@ -496,7 +533,7 @@ function syncClimb(level,score){const me=store.get("altitude.me");if(!API||!me)r
   api({action:"climb",id:me.id,level,score}).then(j=>{applyMe(j.me);board=j.board;}).catch(()=>{});}
 function hue(s){let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))%360;return h;}
 function boot(){const me=store.get("altitude.me");if(!me||!me.u)return welcomeView();homeView();
-  if(API)api({action:"me",id:me.id}).then(j=>{applyMe(j.me);board=j.board;if(mode==="levels"&&$("map"))homeView();}).catch(()=>{});}
+  if(API)api({action:"me",id:me.id}).then(j=>{applyMe(j.me);board=j.board;if(mode==="levels"&&$("map"))homeView();}).catch(()=>{lbDown=true;if(mode==="levels"&&$("map"))homeView();});}
 function welcomeView(){stopTimer();mode="levels";setScene(null);
   card.innerHTML=`<div class="lbl">Welcome to Altitude</div>
     <p class="hero">Pick your <em>climber name</em></p>
@@ -562,7 +599,7 @@ function homeView(){stopTimer();mode="levels";setScene(null);const me=store.get(
     <p class="sub" style="font-size:.88rem;margin-top:-6px">Everyone climbs the same giant mountain. Your height is your total: the sum of your best score on every camp. Tap any flag you've reached to replay it.</p>
     <div class="mapwrap">${mapSVG(players,me.u,next)}</div>
     <div><div class="lbl" style="margin-bottom:8px">Leaderboard</div><ol class="lb">${players.slice(0,50).map((pl,i)=>`<li class="${pl.u===me.u?"me":""}"><span class="rk">${i+1}</span><i style="background:hsl(${hue(pl.u)} 70% 60%)">${esc(pl.u[0].toUpperCase())}</i><b>${esc(pl.u)}</b><span class="lbp">${pl.p?esc(LV[Math.min(pl.p,LV.length)-1].n):"Base camp"}</span><span class="lbs">${fmt(pl.t)} pts</span></li>`).join("")}</ol>
-      ${API?"":`<p class="sub" style="font-size:.85rem;margin-top:10px">The shared leaderboard isn't connected yet, so only you appear here.</p>`}</div>`;
+      ${!API?`<p class="sub" style="font-size:.85rem;margin-top:10px">The shared leaderboard isn't connected here, so only you appear.</p>`:lbDown?`<p class="sub" style="font-size:.85rem;margin-top:10px;color:var(--t4)">The shared leaderboard is offline right now, so only you appear. Your progress is still saved on this device.</p>`:""}</div>`;
   $("climb").onclick=()=>levelIntro(done?LV.length-1:next);
   card.querySelectorAll(".pk:not(.lk)").forEach(g=>{const go=()=>levelIntro(+g.dataset.i);g.onclick=go;g.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go();}};});
   const mw=card.querySelector(".mapwrap");const meG=card.querySelector(".sf.me");if(mw&&meG){const y=+meG.dataset.y/660*mw.scrollHeight;mw.scrollTop=Math.max(0,y-mw.clientHeight*.55);}}
@@ -591,6 +628,7 @@ function finishRound(hit){const p=st.prompts[st.i];build(p);const before=altFor(
       <div class="gain">${t?`+${t.p} pts <span>·</span> +<span id="gm" style="color:var(--ink)">0</span> <span>m climbed</span>`:`<span>You hold your position at ${fmt(after)} m</span>`}</div>
     </div>
     <div class="reveal">
+      ${hit&&hit.wiki?`<p>✓ Not on our list, but checked on Wikipedia, so it counts as <b>Rare</b>.</p>`:hit&&hit.fixed?`<p>✎ Autocorrected from “${esc(hit.typed||"")}”.</p>`:""}
       <p>Rare air answer: <b class="gold">${esc(rare)}</b>${hit&&hit.tier===4?" ← that's you":""}</p>
       <p>Deep cuts: <b>${esc(deep)}</b></p>
       <p>${left?`<b>${left}</b> more points to the summit of ${esc(st.L.n)}.`:`<b class="gold">Summit reached.</b> Every extra point now earns stars.`}</p>
